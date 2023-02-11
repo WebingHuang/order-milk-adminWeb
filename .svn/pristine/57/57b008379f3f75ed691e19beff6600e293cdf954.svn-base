@@ -1,0 +1,203 @@
+<!--
+ * @Description: 
+ * @version: 
+ * @Author: Miracle_Sir
+ * @Date: 2022-08-26 14:29:34
+ * @LastEditors: Miracle_Sir
+ * @LastEditTime: 2022-08-28 07:52:43
+-->
+<template>
+  <div id="deliver">
+
+  <a-table :columns="columns" :data-source="dataSource" bordered :pagination="false">
+    <template v-for="col in ['deliveryNum', 'deliveryDate']" :slot="col" slot-scope="text, record, index">
+      <div :key="col" v-if="dataObj">
+        <a-input
+          v-if="col == 'deliveryNum'"
+          v-model="editableData[index][col]"
+          style="width: 5rem;"
+        />
+         <a-date-picker
+          v-if="col == 'deliveryDate'"
+        valueFormat="YYYY-MM-DD HH:mm:ss"
+         v-model="editableData[index][col]" />
+      </div>
+      <div :key="col" v-else>
+        <span v-if="col == 'deliveryNum'">
+          {{text}}
+        </span>
+        <span v-else style="white-space: nowrap;">
+          {{dateFormat(text)}}
+        </span>
+      </div>
+    </template>
+    <template slot="key" slot-scope="text, record, index">
+      <div>{{index + 1}}</div>
+    </template>
+
+    <template slot="skuPic" slot-scope="text">
+      <div><img :src="text" width="40" alt=""></div>
+    </template>
+
+    <template slot="weekend" slot-scope="text">
+      <div>
+        {{weekendFormat(text)}}
+      </div>
+    </template>
+  </a-table>
+    <div style="display: flex;
+      justify-content: end;
+      margin-top: 1em;" v-if="dataObj">
+      <a-button style="margin-right:0.5em;" @click="cancel">取消</a-button>
+      <a-button type="primary" @click="confirmOk">确认送货</a-button>
+    </div>
+  </div>
+</template>
+
+<script>
+import { queryDeliveryRecord, deliveringGoods } from '@/api/system'
+
+const columns = [
+  {
+    sent: true,
+    title: '序号',
+    dataIndex: 'key',
+    width: '10%',
+    scopedSlots: {
+      customRender: 'key',
+    },
+  },
+  {
+    sent: true,
+    title: '规格图片',
+    dataIndex: 'skuPic',
+    width: '15%',
+    scopedSlots: {
+      customRender: 'skuPic',
+    },
+  },
+  {
+    title: '商品名称',
+    width: '15%',
+    dataIndex: 'spuName',
+  },
+  {
+    sent: true,
+    title: '规格名称',
+    dataIndex: 'skuName',
+    width: '20%',
+  },
+  {
+    sent: true,
+    title: '送货数量',
+    dataIndex: 'deliveryNum',
+    scopedSlots: {
+      customRender: 'deliveryNum',
+    },
+  },
+  {
+    sent: true,
+    title: '送货日期',
+    dataIndex: 'deliveryDate',
+    scopedSlots: {
+      customRender: 'deliveryDate',
+    },
+  },
+  {
+    title: '星期',
+    dataIndex: 'weekend',
+    scopedSlots: {
+      customRender: 'weekend',
+    },
+  },
+  {
+    title: '创建人',
+    dataIndex: 'createdUserName',
+  },
+];
+export default {
+  name: 'DeliverGoods',
+  data() {
+    return {
+      editableData: [],
+      columns: [],
+      dataSource:[],
+    }
+  },
+  props: ['orderId', 'dataObj'],
+  created() {
+    this.initColumns()
+    this.getData();
+  },
+  methods: {
+    weekendFormat(val) {
+      // 返回今天星期几
+      return "日一二三四五六".charAt(new Date(val+ ' 00:00:00').getDay())
+    },
+    dateFormat(val) {
+      let gg = val.split(' ')
+      return gg[0];
+    },
+    initColumns() {
+      if (this.dataObj) {
+        this.columns = columns.filter(e => e.sent);
+      } else {
+        this.columns = columns;
+      }
+
+    },
+    // 送货记录
+    getData() {
+      if (this.dataObj) {
+        this.dataSource = this.dataObj.omsOrderItemEntityList.filter(e => e.unsentNum);
+        this.editableData = [];
+        this.dataSource.forEach(e => {
+          this.editableData.push(({
+            orderId: this.dataObj.id,
+            orderItemId: e.id,
+            deliveryNum: '',
+            deliveryDate: '',
+          }))
+        });
+      } else {
+        queryDeliveryRecord({
+          pageNum: 1,
+          pageSize: 50,
+          orderId: this.orderId
+        }).then(res => {
+          this.dataSource = res.data.records;
+          this.dataSource.forEach(e => {
+            this.editableData.push(({
+              deliveryNum: e.deliveryNum,
+              deliveryDate: e.deliveryDate,
+            }))
+          });
+        })
+      }
+    },
+    cancel() {
+      this.$emit('cancel')
+    },
+    confirmOk() {
+      let sendData = this.editableData.filter(e => e.deliveryNum && e.deliveryDate);
+      if (!sendData.length) {
+        this.$message.warning('至少有一条送货数量与送货日期必填');
+      } else {
+        deliveringGoods({
+          deliveryRecords: sendData
+        }).then(res => {
+          this.$emit('confirm')
+        })
+      }
+    },
+  }
+}
+</script>
+
+<style lang="less">
+#deliver {
+  .ant-table-thead > tr > th .ant-table-header-column {
+    width: max-content;
+  }
+}
+</style>

@@ -1,0 +1,1007 @@
+<template>
+  <div id="card">
+    <page-header-wrapper>
+      <!-- 搜索/筛选栏 查询/重置 -->
+      <a-card :bordered="false">
+        <div class="table-page-search-wrapper">
+          <a-form layout="inline">
+            <a-row :gutter="48">
+              <!-- <a-col :md="5" :sm="24">
+                <a-form-item label="会员卡号">
+                  <a-input v-model="queryCondition.Encode" placeholder="" />
+                </a-form-item>
+              </a-col> -->
+              <!-- <a-col :md="5" :sm="24">
+
+
+                 <a-form-model-item label="会员卡批次号">
+                 <a-select mode="combobox" style="width: 100%"  @change="cardHolderChange"  v-model="queryCondition.BatchNo" @blur="cardHolderBlur" @select="cardHolderBlur">
+                  <a-select-option v-for="(item) in cardBatchList" :key="item">
+                    {{item}}
+                  </a-select-option>
+                </a-select>
+               </a-form-model-item>
+              </a-col>
+              <a-col :md="5" :sm="24">
+                <a-form-model-item label="代理商手机号">
+                 <a-select mode="combobox" style="width: 100%"  @change="holderChange"  v-model="queryCondition.holderCode" @blur="holderCodeBlur" @select="holderCodeBlur">
+                  <a-select-option v-for="(item) in userArrayByRloe.userPhone" :key="item">
+                    {{item}}
+                  </a-select-option>
+                </a-select>
+               </a-form-model-item>
+              </a-col>
+              <a-col :md="5" :sm="24">
+                <a-form-model-item label="激活人手机号">
+                 <a-select mode="combobox" style="width: 100%"  @change="holderChange"  v-model="queryCondition.activateUserCode" @blur="userRolderCodeBlur" @select="userRolderCodeBlur">
+                  <a-select-option v-for="(item) in userArray.userPhone" :key="item">
+                    {{item}}
+                  </a-select-option>
+                </a-select>
+               </a-form-model-item>
+              </a-col>
+              <a-col :md="(!advanced && 4) || 24" :sm="24">
+                <span
+                  class="table-page-search-submitButtons"
+                  :style="(advanced && { float: 'right', overflow: 'hidden' }) || {}"
+                >
+                  <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>
+                  <a-button
+                    style="margin-left: 8px"
+                    @click="() => ((this.queryCondition = {}), $refs.table.refresh(true))"
+                    >重置</a-button
+                  >
+                </span>
+              </a-col> -->
+            </a-row>
+          </a-form>
+        </div>
+        <!-- 右键菜单 -->
+        <!-- <a-menu class="menustyle" :style="menuStyle" v-if="menuVisible">
+          <a-menu-item> -->
+            <!-- <a >新增会员卡</a> -->
+
+            <!-- <a @click="deleteAll">批量删除</a>
+          </a-menu-item>
+        </a-menu> -->
+        <!-- 新建 -->
+        <!-- <div class="table-operator" :title="state ? '修改信息' : '新增信息'">
+          <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button>
+             <download-excel
+              class="btn btn-default"
+              :data="json_data"
+              :fields="json_fields"
+              worksheet="会员卡"
+              :name="exclName"
+            >
+            <a-button type="primary" icon="download" >
+              导出
+            </a-button>
+            </download-excel>
+        </div> -->
+        <!-- 表格 -->
+        <s-table
+          ref="table"
+          size="small"
+          rowKey="encode"
+          :columns="columns"
+          :data="loadData"
+          :alert="true"
+          :rowSelection="rowSelection"
+          bordered
+          :customRow="setRow"
+        >
+          <span slot="serial" slot-scope="text, record, index">
+            {{ index + 1 }}
+          </span>
+
+
+          <!-- 审核 -->
+          <span slot="stauts" slot-scope="text">
+
+            <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
+
+
+          </span>
+
+
+
+          <span slot="action" slot-scope="text, record">
+            <template>
+              <a @click="handleEdit(record)">配置</a>
+
+              <!-- <a-divider type="vertical" /> -->
+
+
+
+              <!-- <a-popconfirm title="确定要删除吗?" ok-text="确定" cancel-text="取消" @confirm="handleDel(record)">
+                <a>删除</a>
+              </a-popconfirm> -->
+            </template>
+          </span>
+        </s-table>
+      </a-card>
+      <!-- 抽屉 -->
+      <template>
+        <div>
+          <a-drawer
+            :title="state ? '修改会员卡' : '新增会员卡'"
+            :placement="placement"
+            :closable="false"
+            :visible="visible"
+            @close="onClose"
+            width="800px"
+          >
+            <a-form-model
+              :model="cardForm"
+              :label-col="labelCol"
+              :wrapper-col="wrapperCol"
+              :rules="rules"
+              ref="cardForm"
+            >
+              <a-form-model-item label="会员卡标题" prop="cardName">
+                <a-input v-model="cardForm.cardName" />
+              </a-form-model-item>
+
+
+
+               <a-form-model-item label="代理商手机号">
+                 <a-select mode="combobox" style="width: 100%"  @change="holderChange"  v-model="userPhone" @blur="holderBlur">
+                  <a-select-option v-for="(item) in userArrayByRloe2.userPhone" :key="item">
+                    {{item}}
+                  </a-select-option>
+                </a-select>
+               </a-form-model-item>
+
+               <a-form-model-item label="商品类别">
+                 <a-select mode="combobox" style="width: 100%"  v-model="cardForm.type">
+                  <a-select-option v-for="(item) in commodityTypeList" :key="item">
+                    {{item}}
+                  </a-select-option>
+                </a-select>
+               </a-form-model-item>
+
+
+
+
+
+              <!-- <a-form-model-item label="提货卡类型">
+                <a-input v-model="cardForm.phone" />
+              </a-form-model-item> -->
+
+              <a-form-model-item label="提货卡数量" >
+                <a-input v-model="cardForm.quantity" prop="quantity" />
+              </a-form-model-item>
+
+
+              <a-form-model-item label="生成进度" v-if="progressNum!=0">
+                <div>
+                  <a-progress :percent="progressNum"  :status="progressNum==100? '': 'active'"/>
+                </div>
+              </a-form-model-item>
+
+
+
+              <a-button type="primary" @click="handleOk" style="margin-left: 17%" :loading="iconLoading" > 确定 </a-button>
+            </a-form-model>
+          </a-drawer>
+        </div>
+      </template>
+
+      <div>
+        <!-- 图片预览 -->
+        <a-modal v-model="enlarge" title="预览" @ok="en" okText="完成" width="500px" cancelText="关闭">
+          <img style="width: 200px; height: 200px" :src="icooon" class="preview" />
+        </a-modal>
+      </div>
+    </page-header-wrapper>
+  </div>
+</template>
+</style>
+<script>
+// 引入表格组件 和
+import { STable, Ellipsis } from '@/components'
+// 引入调用接口方法
+
+
+import { editCard ,getCardListPage , getfindByCardList,getUserArray,getBatchNoList,getBankListPage} from '@/api/system'
+
+import { getTypeList } from '@/api/commodity'
+
+
+
+import Vue from "vue";
+
+import JsonExcel from "vue-json-excel";
+
+Vue.component("downloadExcel", JsonExcel);
+
+
+
+import HeadCut from '@/views/system/user/HeadCut'
+
+// Vue.use(FormModel)
+// import StepByStepModal from '@/views/list/modules/StepByStepModal'
+// 引入操作/配置/弹出框组件
+// import CreateForm from '@/views/list/modules/CreateForm'
+
+const columns = [
+  {
+    title: '编号',
+    dataIndex: 'id',
+    align: 'center',
+  },
+  {
+    title: '银行卡名称',
+    dataIndex: 'bankCardName',
+    align: 'center',
+  },
+
+  {
+    title: '银行卡号',
+    dataIndex: 'bankCardFront',
+    align: 'center',
+  },
+  {
+    title: '用户名',
+    dataIndex: 'userName',
+    align: 'center',
+  },
+  {
+    title: '用户身份证号',
+    dataIndex: 'idCard',
+    align: 'center',
+  },
+  {
+    title: '用户手机号',
+    dataIndex: 'mobile',
+    align: 'center',
+  },
+
+  // {
+  //   title: '状态',
+  //   width: '100px',
+  //   dataIndex: 'stauts',
+  //   scopedSlots: { customRender: 'stauts' },
+  //   align: 'center',
+  // },
+  {
+    title: '创建时间',
+    dataIndex: 'createdDate',
+    align: 'center',
+  },
+  // {
+  //   title: '操作',
+  //   dataIndex: 'action',
+  //   width: '100px',
+  //   scopedSlots: { customRender: 'action' },
+  //   align: 'center',
+  // },
+]
+const statusMap = {
+  0: {
+    status: 'default',
+    text: '未使用',
+  },
+  1: {
+    status: 'success',
+    text: '已使用',
+  },
+
+}
+function getBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = (error) => reject(error)
+  })
+}
+export default {
+  name: 'card',
+  components: {
+    STable,
+    Ellipsis,
+    HeadCut,
+  },
+  data() {
+    this.columns = columns
+    return {
+      iconLoading:false, //按钮状态
+      progressNum:0,
+      exclName:"",
+      json_fields: {
+            '提货卡id': 'cardId',
+            '优惠金额': 'amount',
+            '提货卡名称': 'cardName',
+            '提货卡卷码': 'cdkey',
+            '持有者ID': 'holderCode',
+            '激活者ID': 'activateUserCode',
+            '激活时间': 'activateDate',
+            '激活状态': 'stauts',
+            '开始时间': 'startDate',
+            '过期时间': 'overdueDate',
+            '创建时间': 'createdDate',
+            '更新时间': 'updateDate',
+            '删除标识': 'deleteFlag',
+            '批次号': 'batchNo',
+            '编号': 'encode',
+      },
+      json_data: [],
+      json_meta: [
+        [
+          {
+            key: "charset",
+            value: "utf-8",
+          },
+        ],
+      ],
+      preview: false,
+      preview1: false,
+      // 公司类型下拉
+      size: 'default',
+      // 上传图片
+      previewVisible: false,
+      previewVisible2: false,
+      previewImage: '',
+      previewImage2: '',
+      // 新增,修改按钮弹窗状态
+      visiblea: false,
+      // 抽屉要从哪边显示
+      placement: 'right',
+      // 上传图片要用到的数组
+      fileList: [],
+      labelCol: { span: 4 },
+      wrapperCol: { span: 14 },
+      // 右键菜单显示/隐藏
+      menuVisible: false,
+      //新增修改状态
+      state: false,
+      idfalse: false,
+
+
+
+      //提货卡表单
+      cardForm:{
+
+        cardName:"", // 提货卡名称
+        amount:"", // 提货卡金额
+        holderCode:"", //持有者Id
+        quantity:"", //生成数量
+        startDate:"", // 开始时间
+        overdueDate:"", // 过期时间
+        type:"",
+
+
+      },
+
+
+      // 表单验证
+      rules: {
+        cardName:[
+          { required: true, message: '不能为空' },
+        ],
+
+        amount:[
+           { required: true, message: '不能为空' },
+        ],
+
+        quantity:[
+           { required: true, message: '不能为空' },
+        ],
+
+
+      },
+      //  图片弹窗
+      icooon: '',
+      enlarge: false,
+      //   增加修改弹窗状态
+      visible: false,
+      // 右键菜单样式
+      menuStyle: {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        zIndex: 1,
+        borderRadius: '5px',
+        border: '1px solid #eee',
+      },
+      // create model
+      userConfigIsShow: true,
+      visible: false,
+      // confirmLoading: false,
+      mdl: null,
+      // 高级搜索 展开/关闭
+      advanced: false,
+      // 查询参数
+      queryParam: {
+
+      },
+      queryCondition: {
+
+        Encode: '', //提货卡ID
+        holderCode:"",//代理商ID·
+        BatchNo:"", //批次号
+        activateUserCode:"",
+
+      },
+      holderCode:"",//代理商ID·
+      activateUserCode:"", //机或者ID
+      // 分页参数
+      pageFrom: {
+        // pageNum: 1, //第几次请求
+        // pageSize: 10, //每页显示几条
+        // totalPages: 0, //请求总次数
+        // totalSize: 0, //所有数据数量
+      },
+      // 加载数据方法 必须为 Promise 对象
+      loadData: (parameter) => {
+        const requestParameters = Object.assign({}, parameter, this.pageFrom)
+        // console.log(this.queryCondition)
+
+
+
+        return getBankListPage(requestParameters, {
+          encode:this.queryCondition.Encode, //
+          holderCode:this.holderCode, //
+          batchNo:this.queryCondition.BatchNo, //
+          activateUserCode:this.activateUserCode,
+
+        })
+          .then((res) => {
+            if (res.code == 200) {
+
+              console.log(res)
+
+
+              const pageData = {
+                data: res.data.records,
+                pageNo: Number(res.data.current),
+                pageSize:Number(res.data.size),
+                totalCount:Number(res.data.total),
+                totalPage: Number(res.data.pages),
+              }
+              return pageData
+            } else {
+              return
+            }
+
+          })
+          .catch((err) => {
+            alert(err)
+          })
+      },
+      //表格选中行的ID
+      selectedRowKeys: [],
+      //表格选中行的所有数据
+      selectedRows: [],
+      // 公司类型
+      typecompanya: [],
+      roleTypeList:[], //角色类型
+      roleType:'',
+      companyType: '',
+
+      typeId: '',
+
+      //用户数据
+      userArray: {
+        userName:[],
+        userCode:[],
+        userPhone:[]
+      },
+      //代理商数据
+      userArrayByRloe: {
+        userName:[],
+        userCode:[],
+        userPhone:[]
+      },
+      userArrayByRloe2:{
+         userName:[],
+        userCode:[],
+        userPhone:[]
+      },
+      //商品类别
+      commodityTypeList:[],
+
+      //会员卡批次号数组
+      cardBatchList:[],
+      userPhone:"", // 手机号
+
+    }
+  },
+  filters: {
+    statusFilter(type) {
+      return statusMap[type].text
+    },
+     statusTypeFilter(type) {
+      return statusMap[type].status
+    },
+
+  },
+  computed: {
+    rowSelection() {
+      return {
+        selectedRowKeys: this.selectedRowKeys,
+        onChange: this.onSelectChange,
+      }
+    },
+  },
+  methods: {
+
+    //查询商品类型
+    getTypeList(){
+
+       return getTypeList()
+       .then((res) => {
+         console.log(res.data)
+         this.commodityTypeList = [];
+
+         res.data.map((item)=>{
+           this.commodityTypeList.push(item.spuType);
+         })
+
+       })
+
+    },
+
+    // 查询会员卡批次号
+    getBatchNoList(){
+       return getBatchNoList()
+       .then((res) => {
+        if(res.code == 200){
+
+          this.cardBatchList = res.data.reverse(); //倒序
+
+        }
+
+       })
+
+    },
+
+    //查询所有代理商
+    getUserArray(flag){
+
+      var _this = this;
+
+
+
+      _this.userArray.userName=[];
+      _this.userArray.userCode=[];
+      _this.userArray.userPhone=[];
+
+      return getUserArray({
+        flag:flag
+      })
+       .then((res) => {
+        if(res.code == 200){
+
+          if(flag ==1){
+
+             _this.userArrayByRloe.userName = [];
+             _this.userArrayByRloe.userCode = [];
+             _this.userArrayByRloe.userPhone = [];
+
+
+            res.data.forEach(item=>{
+              _this.userArrayByRloe.userName.push(item.userName)
+              _this.userArrayByRloe.userCode.push(item.userCode)
+              _this.userArrayByRloe.userPhone.push(item.userPhone)
+
+            })
+
+            //为了防止控制台报错，同一个数组用在两个地方所以多创建一个数据+
+            _this.userArrayByRloe2 =  _this.userArrayByRloe;
+
+            // console.log( _this.userArrayByRloe2)
+
+
+            if(_this.cardForm.holderCode){
+              for(var i=0; i < _this.userArrayByRloe.userCode.length; i++){
+                if(_this.cardForm.holderCode ==  _this.userArrayByRloe.userCode[i]){
+                    _this.userPhone =   _this.userArray.userPhone[i];
+                    break;
+                }
+              }
+            }
+
+          }else{
+
+            // console.log("-----------")
+
+             _this.userArray.userName = [];
+             _this.userArray.userCode = [];
+             _this.userArray.userPhone = [];
+
+             res.data.forEach(item=>{
+              _this.userArray.userName.push(item.userName)
+              _this.userArray.userCode.push(item.userCode)
+              _this.userArray.userPhone.push(item.userPhone)
+
+            })
+
+
+            if(_this.cardForm.holderCode){
+              for(var i=0; i < _this.userArray.userCode.length; i++){
+                if(_this.cardForm.holderCode ==  _this.userArray.userCode[i]){
+                    _this.userPhone =   _this.userArray.userPhone[i];
+                    break;
+                }
+              }
+            }
+
+          }
+
+          // console.log(_this.userArray)
+
+
+        }
+
+       })
+
+    },
+
+    //导出excl
+    exportExcl(){
+
+       return getfindByCardList({
+         batchNo:this.queryCondition.BatchNo,
+         encode:this.queryCondition.Encode,
+         holderCode:this.holderCode,
+         activateUserCode:this.activateUserCode,
+       })
+       .then((res) => {
+        // console.log(res)
+        this.json_data = res.data.body;
+       })
+
+    },
+
+    //获取代理商id
+    holderCodeBlur(){
+      var _this = this;
+      _this.holderCode = '';
+      if(_this.queryCondition.holderCode.length != 11){
+        _this.queryCondition.holderCode = '';
+      }else{
+
+        for(var i = 0; i < _this.userArrayByRloe.userPhone.length; i++){
+          if( _this.queryCondition.holderCode ==  _this.userArrayByRloe.userPhone[i] ){
+            _this.holderCode =  _this.userArrayByRloe.userCode[i];
+            break;
+          }
+        }
+      }
+
+    },
+    //激活者id
+    userRolderCodeBlur(){
+      var _this = this;
+       _this.activateUserCode = '';
+      if(_this.queryCondition.activateUserCode.length != 11){
+        _this.queryCondition.activateUserCode = '';
+      }else{
+        for(var i = 0; i < _this.userArray.userPhone.length; i++){
+          if( _this.queryCondition.activateUserCode ==  _this.userArray.userPhone[i] ){
+
+            _this.activateUserCode =  _this.userArray.userCode[i];
+            break;
+          }
+        }
+      }
+    },
+
+
+    holderBlur(){
+
+
+
+
+      // holderCode
+
+      if(this.userPhone.length!=11){
+        this.userPhone = "";
+        this.cardForm.holderCode = "";
+      }else{
+        for(var i = 0; i < this.userArray.userPhone.length; i++){
+          if(this.userArray.userPhone[i] == this.userPhone){
+            console.log(this.userArray.userCode[i])
+             this.cardForm.holderCode = this.userArray.userCode[i];
+             break;
+          }
+        }
+      }
+    },
+
+    //批次号移出事件
+    cardHolderBlur(){
+
+      var isok = false;
+      for(var i=0; i < this.cardBatchList.length; i++){
+        if(this.queryCondition.BatchNo == this.cardBatchList[i]){
+          isok =true;
+          break;
+        }
+      }
+
+      if(!isok){
+        this.queryCondition.BatchNo = '';
+      }
+
+    },
+
+    //会员卡批次号监听
+    cardHolderChange(value){
+
+    },
+
+    //持有人监听
+    holderChange(value){
+
+      // console.log(value.length)
+      // if(value.length!=11){
+      //   this.userPhone = "";
+      // }
+
+      // console.log(this.userPhone)
+
+
+        //  console.log(`selected ${value}`);
+    },
+
+    userholderChange(value){
+
+    },
+    onClose() {
+      this.visible = false
+    },
+    onChange(e) {
+      this.placement = e.target.value
+    },
+
+
+
+
+
+
+    en(e) {
+      this.enlarge = false
+    },
+
+    //新增
+    handleAdd() {
+      this.state = false
+      this.preview = false
+      this.preview1 = false
+
+      this.cardForm.cardName ="";
+      this.cardForm.amount ="";
+      this.cardForm.holderCode ="";
+      this.cardForm.quantity ="";
+
+      this.cardForm.startDate ="";
+      this.cardForm.overdueDate ="";
+      this.visible = true;
+
+      this.progressNum = 0;
+
+      this.getUserArray(1);
+
+      this.getUserArray();
+
+      this.getTypeList();
+
+
+
+
+
+    },
+    // 修改
+    handleEdit(record) {
+
+      var _this = this;
+
+      console.log(record)
+
+
+
+      _this.cardForm.cardName = record.cardName;
+      _this.cardForm.holderCode = record.holderCode;
+
+      _this.getUserArray(1);
+
+
+      _this.visible = true
+      _this.state = true
+
+
+
+
+    },
+    // 删除
+    handleDel(record) {
+
+      return removeUser({
+        dataVersion:record.dataVersion, //
+        userCode:record.userCode, //
+       }).then((res) => {
+        this.$refs.table.refresh(false)
+        this.$notification.success({
+          message: '提示',
+          description: '删除成功',
+        })
+      })
+    },
+    // 批量删除
+    deleteAll(record) {
+      alert()
+
+        var that = this
+        this.$confirm({
+          title: '警示',
+          content: '确定要全部删除吗?',
+          onOk() {
+            alert()
+            return removeUser({
+              dataVersion:record.dataVersion, //
+              userCode:record.userCode, //
+             }).then((res) => {
+              that.$refs.table.refresh(false)
+              that.$notification.success({
+                message: '提示',
+                description: res.message,
+              })
+            })
+          },
+          onCancel() {},
+        })
+
+    },
+    // 提交
+    handleOk(e) {
+      this.$refs.cardForm.validate((valid) => {
+
+
+        // return
+        // 校验未全部通过，结束当前提交 (验证失败)
+        // this.companyForm.oldImg = this.oldImg.join(',')
+        if (!valid) {
+          return false
+
+        } else {
+
+          this.iconLoading = true;
+
+          this.progressNum = 50;
+
+          return editCard(this.state,this.state?
+          {
+            //修改参数
+            // amount:this.cardForm.amount, //金额
+            cardName:this.cardForm.cardName, // 提货卡名称
+            holderCode:this.cardForm.holderCode, // 持有者id
+            quantity:this.cardForm.quantity, //生成数量
+            type:this.cardForm.type, //商品类别
+
+
+          }:{
+            //新增参数
+            amount:this.cardForm.amount, //金额
+            cardName:this.cardForm.cardName, // 提货卡名称
+            holderCode:this.cardForm.holderCode, // 持有者id
+            quantity:this.cardForm.quantity, //生成数量
+            activateUserCode:"", //
+            type:this.cardForm.type, //商品类别
+            donorCode:"",
+
+          }).then((res) => {
+            if(res.code == 200){
+              this.$refs.table.refresh(false)
+              this.$notification.success({
+                message: '提示',
+                description: "操作成功",
+              })
+              this.iconLoading = false;
+              this.progressNum = 100;
+
+              setTimeout(() =>{
+               this.visible = false
+              },1000)
+
+            }
+
+          })
+        }
+      })
+      this.preview1 = false
+      this.preview = false
+    },
+    // 复选框选中触发事件
+    onSelectChange(selectedRowKeys, selectedRows) {
+      this.selectedRowKeys = selectedRowKeys
+      this.selectedRows = selectedRows
+    },
+    //取消右键菜单
+    cancelClick() {
+      this.menuVisible = false
+      document.body.removeEventListener('click', this.cancelClick)
+    },
+    setRow(record) {
+      return {
+        on: {
+          click: () => {},
+          // 右键菜单
+          contextmenu: (e) => {
+            e.preventDefault()
+            this.menuVisible = true
+            this.menuStyle.top = e.clientY + 'px'
+            this.menuStyle.left = e.clientX + 'px'
+            document.addEventListener('click', this.cancelClick)
+          },
+        },
+      }
+    },
+
+  },
+  mounted() {
+
+     var myDate = new Date();
+    var myYear = myDate.getFullYear(); //获取完整的年份(4位,1970-????)
+    var myMonth = myDate.getMonth() + 1; //获取当前月份(0-11,0代表1月)
+    var myToday = myDate.getDate(); //获取当前日(1-31)
+    var myDay = myDate.getDay(); //获取当前星期X(0-6,0代表星期天)
+    var myHour = myDate.getHours(); //获取当前小时数(0-23)
+    var myMinute = myDate.getMinutes(); //获取当前分钟数(0-59)
+    var mySecond = myDate.getSeconds(); //获取当前秒数(0-59)
+    var week = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    var nowTime;
+
+    nowTime = myYear + '-' + myMonth + '-' + myToday ;
+
+
+
+
+    this.exclName = "-会员卡-"+nowTime+".xls";
+
+    this.exportExcl();
+
+    // 查询所有服务商
+    this.getUserArray(1);
+
+    this.getUserArray();
+
+    this.getBatchNoList();
+
+
+  },
+  watch: {
+    // 去掉表单验证信息二次打开残留
+    visible(val, newVal) {
+      //监听的是控制模态框显示或隐藏开关的布尔值
+      // 监视dialog状态（打开、关闭）
+      if (val) {
+        try {
+          this.$refs['cardForm'].clearValidate() // 重置编辑表单,移出验证
+        } catch (e) {}
+      }
+    },
+  },
+}
+</script>
+
+<style lang="less" scope>
+  #card{
+    .table-operator{
+       display: flex;
+       align-items: center;
+      button{
+        display: flex;
+        align-items: center;
+        .anticon-download{
+          font-size: 18px;
+        }
+      }
+
+    }
+  }
+
+</style>

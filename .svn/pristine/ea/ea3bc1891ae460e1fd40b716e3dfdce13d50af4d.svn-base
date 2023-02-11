@@ -1,0 +1,1293 @@
+<template>
+  <div id="orderList">
+    <page-header-wrapper>
+      <!-- 搜索/筛选栏 查询/重置 -->
+      <a-card :bordered="false">
+        <div class="table-page-search-wrapper">
+          <a-form layout="inline">
+            <a-row :gutter="48">
+              <a-col :md="5" :sm="24">
+                <a-form-item label="订单编号">
+                  <a-input v-model="queryCondition.orderSn" placeholder="" />
+                </a-form-item>
+              </a-col>
+              <a-col :md="5" :sm="24">
+                <a-form-item label="商户订单号">
+                  <a-input v-model="queryCondition.batchId" placeholder="" />
+                </a-form-item>
+              </a-col>
+              <a-col :md="5" :sm="24">
+                <a-form-item label="下单人手机号">
+                  <a-input v-model="queryCondition.userPhone" placeholder="" />
+                </a-form-item>
+              </a-col>
+              <a-col :md="(!advanced && 4) || 2" :sm="12">
+
+
+                <a-select  :value="queryCondition.status.toString()" style="width: 130px" @change="handleChangea">
+                  <a-select-option value="">
+                    <a-badge status="success" text="全部订单" color="#2db7f5" />
+                  </a-select-option>
+
+                  <a-select-option :value="item.value.toString()" v-for="(item,index) in statusList" :key="(index+1).toString()">
+                    <a-badge :status="item.status" :text="item.text"  />
+                    <!-- {{item.status}} -->
+                 </a-select-option>
+                </a-select>
+              </a-col>
+              <a-col :md="(!advanced && 4) || 2" :sm="24">
+                <span
+                  class="table-page-search-submitButtons"
+                  :style="(advanced && { float: 'right', overflow: 'hidden' }) || {}"
+                >
+                  <a-button type="primary" @click="$refs.table.refresh(true)">查询</a-button>
+                  <a-button
+                    style="margin-left: 8px"
+                    @click="() => ((this.queryCondition = {}), $refs.table.refresh(true))"
+                    >重置</a-button
+                  >
+                </span>
+              </a-col>
+            </a-row>
+             <a-row :gutter="48">
+              <a-col :md="5" :sm="24">
+                <!-- <a-button type="primary"  @click="showModal" style="margin-right: 1em;">
+                  导出
+                  </a-button> -->
+                <a-button type="primary"  @click="showModal">
+                  一键导出
+                  </a-button>
+              </a-col>
+            </a-row>
+
+          </a-form>
+        </div>
+        <!-- 右键菜单 -->
+        <a-menu class="menustyle" :style="menuStyle" v-if="menuVisible">
+          <a-menu-item>
+            <a @click="deleteAll">批量删除</a>
+          </a-menu-item>
+        </a-menu>
+        <!-- 新建 -->
+        <div class="table-operator" :title="state ? '修改信息' : '新增信息'">
+          <!-- <a-button type="primary" icon="plus" @click="handleAdd">新建</a-button> -->
+        </div>
+        <!-- 表格 -->
+        <s-table
+          ref="table"
+          size="default"
+          rowKey="id"
+          :columns="columns"
+          :data="loadData"
+          :alert="true"
+          :rowSelection="rowSelection"
+          bordered
+          :customRow="setRow"
+        >
+          <span slot="serial" slot-scope="text, record, index">
+            {{ index + 1 }}
+          </span>
+
+          <!-- 审核 -->
+          <span slot="payTypeName" slot-scope="text">
+            <a-badge color="#2db7f5"   :text="text | payTypeFilter" />
+          </span>
+          <span slot="status" slot-scope="text">
+            <a-badge :status="text | statusTypeFilter" :text="text | statusFilter" />
+          </span>
+          <span slot="description" slot-scope="text">
+            <ellipsis :length="4" tooltip>{{ text }}</ellipsis>
+          </span>
+          <div slot="action" slot-scope="text, record" style="word-break: keep-all;margin:auto;">
+            <template>
+              <!-- <a @click.stop="putOderState(record)" v-if="record.orderStatus==0">校验</a>
+              <a-divider type="vertical"  v-if="record.orderStatus==0"/> -->
+              <div style="text-align: left;">
+                <span style="white-space: nowrap;">
+                  <a @click="getItemInfo(record)">查看</a>
+                  <a-divider type="vertical" />
+                  <a @click="handleEdit(record)">修改</a>
+                </span>
+                <a-divider type="vertical" style="background-color: transparent;"/>
+                <span style="white-space: nowrap;">
+                  <a @click="showDeliverCard(record, 2)" v-if="record.orderStatus==1||record.orderStatus==2">送货</a>
+                  <a-divider type="vertical" v-if="record.orderStatus==1||record.orderStatus==2" />
+                  <a @click="showDeliverCard(record, 1)" 
+                    v-if="record.orderStatus==3||record.orderStatus==2||record.orderStatus==1||record.orderStatus==4||record.orderStatus==5" 
+                  >送货记录</a>
+                </span>
+  
+                <!-- <a-divider type="vertical" />
+                <a-popconfirm title="确定要删除吗?" ok-text="确定" cancel-text="取消" @confirm="handleDel(record)">
+                  <a>删除</a>
+                </a-popconfirm> -->
+                <!-- <a-divider type="vertical" />
+                <a-popconfirm title="确定要取消吗?" ok-text="确定" cancel-text="取消" @confirm="handleCane(record)">
+                  <a>取消</a>
+                </a-popconfirm> -->
+              </div>
+            </template>
+          </div>
+        </s-table>
+      </a-card>
+      <!-- 抽屉 -->
+      <template>
+        <div>
+          <a-drawer
+            :title="state ? '修改订单' : '新增订单'"
+            :placement="placement"
+            :closable="false"
+            :visible="visible"
+            @close="onClose"
+            width="800px"
+          >
+            <a-form-model
+              :model="orderFrom"
+              :label-col="labelCol"
+              :wrapper-col="wrapperCol"
+              :rules="rules"
+              ref="orderFrom"
+            >
+              <a-form-model-item label="订单编号" >
+                <a-input v-model="orderFrom.orderSn" :disabled="true"/>
+              </a-form-model-item>
+
+              <!-- <a-form-model-item label="物流单号" >
+                <a-input v-model="orderFrom.deliverySn"  :disabled="orderFrom.orderStatus !=1  && orderFrom.orderStatus !=2"/>
+              </a-form-model-item> -->
+
+              <a-form-model-item label="订单状态">
+                <a-select  :value="orderFrom.orderStatus" style="width: 130px" @change="handleChangeb">
+                  <a-select-option :value="item.value.toString()" v-for="(item,index) in upddataStateList" :key="(index+1).toString()">
+                    <a-badge :status="item.status" :text="item.text" />
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+
+              <a-form-model-item label="结算状态">
+                <a-select  :value="orderFrom.settlement" style="width: 130px" @change="handleChangej">
+                  <a-select-option :value="1">
+                    已结算
+                  </a-select-option>
+                  <a-select-option :value="0">
+                    未结算
+                  </a-select-option>
+                </a-select>
+              </a-form-model-item>
+
+
+              <a-button type="primary" @click="handleOk" style="margin-left: 17%"  > 确定 </a-button>
+            </a-form-model>
+          </a-drawer>
+        </div>
+      </template>
+
+      <div>
+        <!-- 图片预览 -->
+        <a-modal v-model="enlarge" title="预览" @ok="en" okText="完成" width="500px" cancelText="关闭">
+          <img style="width: 200px; height: 200px" :src="icooon" class="preview" />
+        </a-modal>
+
+        <!-- 模态框 -->
+         <a-modal
+          title="订单详情"
+          :visible="isShow"
+          :width="900"
+          @ok="isShow=false"
+          @cancel="isShow=false"
+
+        >
+
+         <a-form :form="rowInfo" :label-col="{ span: 7 }" :wrapper-col="{ span: 12 }" >
+           <div style="display: flex;justify-content: space-between;">
+             <div style="width:400px;">
+                 <a-form-item label="购买人" >
+                    {{rowInfo.userName}}
+                 </a-form-item>
+                <a-form-item label="订单编号">
+                      {{rowInfo.orderSn}}
+                 </a-form-item>
+
+                <a-form-item label="未送总数量">
+                      {{rowInfo.totalUnsentNum}}盒
+                 </a-form-item>
+                 <a-form-item label="实际支付金额">
+                     {{rowInfo.payAmount}}元
+                 </a-form-item>
+
+                 <!-- <a-form-item label="物流单号" >
+                    {{rowInfo.deliverySn}}
+                 </a-form-item> -->
+             </div>
+             <div style="width:400px;">
+              <a-form-item label="收货人">
+                {{rowInfo.studentName}}
+              </a-form-item>
+              <a-form-item label="联系方式">
+                {{rowInfo.parentsMobile}}
+              </a-form-item>
+              <a-form-item label="学校">
+              <!-- {{rowInfo.receiverDetailAddress}} -->
+              {{rowInfo.schoolName}}
+              </a-form-item>
+              <a-form-item label="班级">
+                <!-- {{rowInfo.receiverProvince}}-{{rowInfo.receiverRegion}} -->
+                {{rowInfo.className}}
+              </a-form-item>
+
+             </div>
+           </div>
+
+            <template>
+                <a-table :columns="columnsOrder" :data-source="rowInfo.omsOrderItemEntityList" rowKey="id" :bordered="true" :pagination="pagination">
+
+                    <span slot="pics" slot-scope="text, record" type="primary" @click="enlargeImg(record)">
+
+                      <img style="width: 50px; height: 50px" :src="record.skuPic" />
+                    </span>
+
+                </a-table>
+            </template>
+          </a-form>
+        </a-modal>
+
+
+      </div>
+
+      <template>
+         <a-modal
+          title="导出参数"
+          :visible="isExlShow"
+          :footer="null"
+          @cancel="isExlShow=false"
+        >
+        <a-form-model
+          :model="orderFrom"
+          :label-col="labelCol"
+          :wrapper-col="wrapperCol"
+          :rules="rules"
+
+          ref="orderFrom"
+        >
+              <a-form-model-item label="订单状态">
+                <a-select  :value="orderExl.orderStatus.toString()" style="width: 130px" @change="excelChangea">
+                  <a-select-option value="">
+                    <a-badge status="success" text="全部订单" color="#2db7f5" />
+                  </a-select-option>
+
+                  <a-select-option :value="item.value.toString()" v-for="(item,index) in statusList" :key="(index+1).toString()">
+                    <a-badge :status="item.status" :text="item.text"  />
+                    <!-- {{item.status}} -->
+                 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+
+              <a-form-model-item label="下单时间">
+                 <a-range-picker
+                  :ranges="{ Today: [moment(), moment()], 'This Month': [moment(), moment().endOf('month')] }"
+                  @change="onTimeChange"
+                 />
+              </a-form-model-item>
+
+              <!-- <a-form-model-item>
+                 <a-progress stroke-linecap="square" :percent="orderSpeed" />
+              </a-form-model-item> -->
+
+              <a-form-model-item label="学校名称">
+                <a-select @change="schoolNameChange" :value="orderExl.schoolName" style="width: 130px">
+                  <a-select-option :value="item.schoolName" 
+                    v-for="(item,index) in schoolList" 
+                    :key="(index+1).toString()">
+                    {{item.schoolName}}
+                 </a-select-option>
+                </a-select>
+              </a-form-model-item>
+
+              <a-form-model-item style="display: flex;align-items: center;">
+                 <!-- <a-button type="primary"  @click="getCrodList" style="    margin-right: 16px;">
+                      数据更新
+                 </a-button> -->
+                   <download-excel
+                      style="display:inline-block;"
+                      class="btn btn-default"
+                      :data="json_data"
+                      :fields="json_fields"
+                      worksheet="订单"
+                      :name="exclName"
+                    >
+                    <a-button type="primary" @click="oneKeyExportExcl" icon="download" >
+                      一键导出
+                    </a-button>
+                  </download-excel>
+              </a-form-model-item>
+
+
+
+
+
+
+
+            </a-form-model>
+
+        </a-modal>
+      </template>
+
+
+      <template>
+        <a-drawer
+          :title="deliverTitle"
+          :placement="placement"
+          :closable="false"
+          :visible="showDeliver"
+          v-if="showDeliver"
+          @close="onClose"
+          width="800px"
+        >
+          <deliver-goods 
+          @confirm="showDeliver=false"
+          @cancel="resetList" :orderId="orderId" :dataObj="dataObj"></deliver-goods>
+        </a-drawer>
+      </template>
+
+    </page-header-wrapper>
+  </div>
+</template>
+
+<script>
+// 引入表格组件 和
+import { STable, Ellipsis } from '@/components'
+
+import moment from 'moment'
+
+// 引入调用接口方法
+import {   deleteCompany } from '@/api/company'
+
+
+import {getFindByOrderListPage,updateOrderStatus, updateOrderSettlement ,querySchoolClassNameByOrder, getOrderInfoById ,getOrderExcel, exportPieSalaryRecordExcel,putOderState} from '@/api/system'
+
+
+import DeliverGoods from './deliverGoods.vue'
+
+import HeadCut from '@/views/admin/company/HeadCut'
+import HeadCut1 from '@/views/admin/company/HeadCut'
+
+import Vue from "vue";
+
+import JsonExcel from "vue-json-excel";
+
+Vue.component("downloadExcel", JsonExcel);
+
+import XLSX from 'xlsx'
+
+// Vue.use(FormModel)
+// import StepByStepModal from '@/views/list/modules/StepByStepModal'
+// 引入操作/配置/弹出框组件
+// import CreateForm from '@/views/list/modules/CreateForm'
+
+
+
+
+const statusList = [{
+  status:"default",
+  value:"0",
+  text:"待付款"
+},{
+  status:"default",
+  value:"1",
+  text:"待送货"
+},{
+  status:"default",
+  value:"2",
+  text:"送货中"
+},{
+  status:"success",
+  value:"3",
+  text:"已送完"
+},{
+  status:"default",
+  value:"4",
+  text:"退款中"
+},{
+  status:"error",
+  value:"5",
+  text:"已退款"
+},{
+  status:"default",
+  value:"6",
+  text:"已关闭"
+}];
+
+const columnsOrder =[
+   {
+    title: '图片',
+    width: '100px',
+    dataIndex: 'skuPic',
+    scopedSlots: { customRender: 'pics' },
+    align: 'center',
+  },
+
+  {
+    title: '商品名称',
+    dataIndex: 'spuName',
+    align: 'center',
+  },
+  {
+    title: '规格名称',
+    dataIndex: 'skuName',
+    align: 'center',
+  },
+  // {
+  //   title: '商品类型',
+  //   dataIndex: 'spuType',
+  //   align: 'center',
+  // },
+
+  {
+    title: '实际支付金额',
+    dataIndex: 'realAmount',
+    align: 'center',
+  },
+
+  {
+    title: '订购数量',
+    dataIndex: 'skuQuantity',
+    align: 'center',
+  },
+  {
+    title: '赠送数量',
+    dataIndex: 'presentedNum',
+    align: 'center',
+  },
+  {
+    title: '未送数量',
+    dataIndex: 'unsentNum',
+    align: 'center',
+  },
+
+];
+
+const columns = [
+
+  {
+    title: '系统订单号',
+    dataIndex: 'orderSn',
+    align: 'center',
+  },
+   {
+    title: '商户订单号',
+    dataIndex: 'batchId',
+    align: 'center',
+  },
+  {
+    title: '下单人',
+    dataIndex: 'userName',
+    align: 'center',
+  },
+   {
+    title: '下单人手机号',
+    dataIndex: 'userPhone',
+    align: 'center',
+  },
+  {
+    title: '下单时间',
+    dataIndex: 'createdDate',
+    align: 'center',
+  },
+   {
+    title: '更新时间',
+    dataIndex: 'updateDate',
+    align: 'center',
+  },
+  {
+    title: '支付方式',
+    dataIndex: 'payType',
+    scopedSlots: { customRender: 'payTypeName' },
+    align: 'center',
+  },
+
+  {
+    title: '状态',
+    dataIndex: 'orderStatus',
+    scopedSlots: { customRender: 'status' },
+    align: 'center',
+  },
+  {
+    title: '描述',
+    dataIndex: 'note',
+    ellipsis: true, //文字多会以省略号的形式展示
+    align: 'center', //列内容居中
+  },
+  {
+    title: '操作',
+    width: '8rem',
+    dataIndex: 'action',
+    scopedSlots: { customRender: 'action' },
+    align: 'center',
+  },
+];
+
+
+const payTypeMap = {
+ 0:{
+  text:"未支付"
+  },
+ 1:{
+  text:"先送后付"
+ },
+ 2:{
+  text:"微信"
+ },
+ 3:{
+  text:"月付"
+ }
+}
+
+
+
+const statusMap = {
+  0:{
+    status: 'default',
+    text: '待付款',
+  },
+  1: {
+    status: 'default',
+    text: '待送货',
+  },
+  2: {
+    status: 'default',
+    text: '送货中',
+  },
+  3: {
+    status: 'success',
+    text: '已送完',
+  },
+  4: {
+    status: 'default',
+    text: '退款中',
+  },
+  5: {
+    status: 'error',
+    text: '已退款',
+  },
+  6: {
+    status: 'default',
+    text: '已关闭',
+  },
+}
+function getBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = (error) => reject(error)
+  })
+}
+export default {
+  name: 'orderList',
+  components: {
+    STable,
+    Ellipsis,
+    HeadCut,
+    HeadCut1,
+    XLSX,
+    DeliverGoods,
+  },
+  data() {
+    this.columns = columns
+    this.columnsOrder = columnsOrder
+    this.statusList =statusList
+
+
+
+    return {
+      parameter: null,
+      dataObj: {},
+      isExlShow:false,
+      schoolList: [],
+      exclName:"",
+      json_fields: {
+       '订单编号': 'orderSn',
+       '商户单号': 'batchId',
+       '下单人': 'userName',
+       '下单人手机号': 'userPhone',
+       '下单时间': 'createdDate',
+       '实际支付金额': 'payAmout',
+       '购买商品': 'spuName',
+       '购买商品类型': 'spuType',
+       '购买数量': 'skuQuantity',
+       '订单状态': 'orderStatusName',
+       '收货人': 'receiverName',
+       '收货人手机号': 'receiverPhone',
+       '省': 'receiverProvince',
+       '市': 'receiverCity',
+       '区': 'receiverRegion',
+       '详细地址': 'receiverDetailAddress',
+       '学校': 'schoolName',
+       '班级': 'className',
+
+      },
+      json_data:[], //excl数据
+      json_meta: [
+        [
+          {
+            key: "charset",
+            value: "utf-8",
+          },
+        ],
+      ],
+
+      upddataStateList:[], //修改状态数组
+      isShow:false, //
+      rowInfo:{},  //详情数据
+      iconLoading:true, //按钮状态
+      preview: false,
+      preview1: false,
+      // 公司类型下拉
+      size: 'default',
+      // 上传图片
+      previewVisible: false,
+      previewVisible2: false,
+      previewImage: '',
+      previewImage2: '',
+      // 新增,修改按钮弹窗状态
+      visiblea: false,
+      showDeliver: false,
+      deliverTitle: '',
+      // 抽屉要从哪边显示
+      placement: 'right',
+      // 上传图片要用到的数组
+      fileList: [],
+      fileList2: [],
+      labelCol: { span: 4 },
+      wrapperCol: { span: 14 },
+      // 右键菜单显示/隐藏
+      menuVisible: false,
+      //新增修改状态
+      state: false,
+      idfalse: false,
+      orderId: '',
+      //订单表单
+      orderFrom:{
+        id: '',
+        orderSn:"", //订单编号
+        orderStatus:"", //订单状态
+        settlement: "", //结算方式
+        // deliverySn:"", //物流单号
+
+      },
+      //进度
+      orderSpeed:0,
+
+      orderExl:{
+
+        orderStatus:"", // 订单状态
+        beginDate:"",//开始时间
+        endDate:"",//结束时间
+        schoolName: "", // 学校名称
+      },
+
+
+      pagination:{
+        total:0, //总条数
+        defaultPageSize:2, //一页显示几条数据
+      },
+
+      form:{
+
+      },
+
+      companyForm: {
+        companyName: '',
+        companyType: 0,
+        userId: '',
+        icon: '',
+        licenseUrl: '',
+        describe: '',
+        nickName: '',
+        introduce: '',
+        id: 0,
+        oldImg: '',
+      },
+      oldImg: [],
+      // 表单验证
+      rules: {
+        companyName: [
+          { required: true, message: '请输入公司名称' },
+          { whitespace: true, message: '不能添加空格' },
+          { pattern: /^[\u4e00-\u9fa5]{0,}$/, message: '输入有误' },
+          { max: 10, message: '最大10个字符' },
+          { min: 3, message: '最小3个字符' },
+        ],
+      },
+      //  图片弹窗
+      icooon: '',
+      enlarge: false,
+      //   增加修改弹窗状态
+      visible: false,
+      // 右键菜单样式
+      menuStyle: {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        zIndex: 1,
+        borderRadius: '5px',
+        border: '1px solid #eee',
+      },
+      // create model
+      userConfigIsShow: true,
+      visible: false,
+      // confirmLoading: false,
+      mdl: null,
+      // 高级搜索 展开/关闭
+      advanced: false,
+      // 查询参数
+      queryParam: {},
+      queryCondition: {
+        //手机号
+        userPhone:"",
+        orderSn: '',
+        batchId:'',
+        status:'1', //默认查询待发货
+
+      },
+      // 分页参数
+      pageFrom: {
+        // pageNum: 1, //第几次请求
+        // pageSize: 10, //每页显示几条
+        // totalPages: 0, //请求总次数
+        // totalSize: 0, //所有数据数量
+      },
+      // 加载数据方法 必须为 Promise 对象
+      loadData: (parameter) => {
+        this.parameter = parameter;
+        var datatime  = this.getCurrentTime();
+
+        this.exclName = "订单-"+datatime+".xls";
+
+        const requestParameters = Object.assign({}, parameter, this.pageFrom)
+        return getFindByOrderListPage(requestParameters, this.queryCondition)
+          .then((res) => {
+            // this.exportExcl();
+            if (res.code == 200) {
+              const pageData = {
+                data: res.data.records,
+                pageNo: Number(res.data.current) ,
+                pageSize: Number(res.data.size),
+                totalCount: Number(res.data.total),
+                totalPage: Number(res.data.pages),
+              }
+
+              pageData.data.map(item=>{
+                if(!item.payType){
+                  item.payType = "0";
+                }
+              })
+
+
+
+              return pageData
+            } else {
+              return
+            }
+          })
+          .catch((err) => {
+            alert(err)
+          })
+      },
+      //表格选中行的ID
+      selectedRowKeys: [],
+      //表格选中行的所有数据
+      selectedRows: [],
+      // 公司类型
+      typecompanya: [],
+
+      companyType: '',
+
+      typeId: '',
+    }
+  },
+  filters: {
+
+
+
+    payTypeFilter(type) {
+      return payTypeMap[type].text
+    },
+    statusFilter(type) {
+      return statusMap[type].text
+    },
+    statusTypeFilter(type) {
+      return statusMap[type].status
+    },
+  },
+  computed: {
+    rowSelection() {
+      return {
+        selectedRowKeys: this.selectedRowKeys,
+        onChange: this.onSelectChange,
+      }
+    },
+  },
+  methods: {
+    resetList() {
+      this.showDeliver=false;
+      this.loadData(this.parameter);
+    },
+    moment,
+    onTimeChange(dates, dateStrings) {
+      console.log('From: ', dates[0], ', to: ', dates[1]);
+      this.orderExl.beginDate =  dateStrings[0];
+      this.orderExl.endDate =  dateStrings[1];
+      if (dateStrings.length) {
+        this.getSchoolList();
+      }
+      // console.log('From: ', dateStrings[0], ', to: ', dateStrings[1]);
+    },
+    getSchoolList() {
+      this.orderExl.schoolName = ''
+      return querySchoolClassNameByOrder({
+        pageNum: 1,
+        pageSize: 50,
+        orderStatus: this.orderExl.orderStatus,
+        beginDate:this.orderExl.beginDate + ' 00:00:00',
+        endDate: this.orderExl.endDate + ' 23:59:59',
+      }, {
+      })
+      .then((res) => {
+        if(res.code==200){
+          this.schoolList = res.data.records;
+        }
+      })
+    },
+    //打开导出excl的弹窗
+    showModal(){
+      this.isExlShow = true;
+    },
+
+    putOderState(item){
+
+
+       return putOderState({
+          batchId:item.batchId
+       }).then((res) => {
+
+         if(res.msg){
+          this.$notification.success({
+            message: '提示',
+            description: "操作成功",
+          })
+         }else{
+
+         }
+
+
+
+      })
+
+    },
+    zeroFill(i){
+      if (i >= 0 && i <= 9) {
+       return "0" + i;
+      } else {
+        return i;
+      }
+    },
+
+    getCurrentTime(){
+
+      var date = new Date();//当前时间
+      var month = this.zeroFill(date.getMonth() + 1);//月
+      var day = this.zeroFill(date.getDate());//日
+      var hour = this.zeroFill(date.getHours());//时
+      var minute = this.zeroFill(date.getMinutes());//分
+      var second = this.zeroFill(date.getSeconds());//秒
+
+      //当前时间
+      var curTime = date.getFullYear() + "-" + month + "-" + day
+      + " " + hour + ':' + minute + ':' + second;
+
+      return curTime;
+    },
+    showDeliverCard(record, type) {
+      this.orderId = record.id;
+      this.showDeliver = true; 
+      this.dataObj = null;
+      if (type==1) {
+        this.deliverTitle = '送货记录';
+      } else {
+        this.dataObj = record;
+        this.deliverTitle = '去送货';
+      }
+    },
+    //行
+    getItemInfo(item){
+
+       return getOrderInfoById({
+          batchId:item.batchId
+       }).then((res) => {
+         if(res.data[0]){
+          this.rowInfo = res.data[0];
+          console.log(this.rowInfo)
+          this.pagination.total = this.rowInfo.omsOrderItemEntityList.length;
+
+
+          this.isShow = true;
+         }
+
+      })
+
+    },
+
+    handleChangea(value){
+
+      this.queryCondition.status = value;
+
+    },
+
+    excelChangea(value){
+
+      if (this.orderExl.orderStatus != value) {
+        this.getSchoolList();
+      }
+      this.orderExl.orderStatus = value;
+    },
+    schoolNameChange(value){
+
+      this.orderExl.schoolName = value;
+    },
+
+    handleChangeb(value){
+
+      this.orderFrom.orderStatus = value;
+
+    },
+    handleChangej(value){
+
+      this.orderFrom.settlement = value;
+
+    },
+
+    onClose() {
+      this.visible = false
+      this.showDeliver = false
+    },
+    onChange(e) {
+      this.placement = e.target.value
+    },
+
+
+    setavatar(id, url) {
+      this.companyForm.icon = url
+      this.preview = true
+    },
+    setavatar1(id, url) {
+      this.companyForm.licenseUrl = url
+      this.preview1 = true
+    },
+    // 下拉树
+    typeTreea(value) {
+      this.companyForm.companyType = this.typecompanya[value].id
+      this.companyType = this.typecompanya[value].companyType
+    },
+    // 上传图片
+    handleCancel() {
+      this.previewVisible = false
+    },
+    handleCancel2() {
+      this.previewVisible = false
+    },
+    getCrodList(){
+      this.exportExcl();
+      // console.log(this.json_data)
+
+
+
+    },
+
+
+    // 上传后预览回调
+    async handlePreview(file) {
+      if (!file.url && !file.preview) {
+        file.preview = await getBase64(file.originFileObj)
+      }
+      this.previewImage = file.url || file.preview
+      this.previewVisible = true
+    },
+    async handlePreview2(file) {
+      if (!file.url && !file.preview) {
+        file.preview = await getBase64(file.originFileObj)
+      }
+      this.previewImage = file.url || file.preview
+      this.previewVisible = true
+    },
+
+
+    examine(e) {
+      this.visiblea = false
+    },
+    enlargeImg(record) {
+      this.icooon = record.skuPic
+      this.enlarge = true
+    },
+    en(e) {
+      this.enlarge = false
+    },
+    //新增
+    handleAdd() {
+      this.state = false
+      this.preview = false
+      this.preview1 = false
+      this.companyForm = {}
+      this.companyForm.userId = JSON.parse(localStorage.getItem('cf01'))
+      this.visible = true
+      this.fileList = []
+      this.fileList2 = []
+      this.companyType = ''
+    },
+
+    // 修改
+    handleEdit(record) {
+      this.upddataStateList = [];
+
+      this.visible = true
+      this.state = true
+
+      this.orderFrom.orderSn = record.orderSn;
+      this.orderFrom.id = record.id;
+      this.orderFrom.orderStatus = record.orderStatus;
+      // this.orderFrom.deliverySn = record.deliverySn;
+      this.orderFrom.settlement = record.isSettlement;
+      console.log(record.orderStatus)
+
+      if(record.orderStatus == 1 || record.orderStatus == 2 || record.orderStatus == 7){ //待发货状态
+        this.upddataStateList.push(this.statusList[1])
+        this.upddataStateList.push(this.statusList[2])
+        this.upddataStateList.push(this.statusList[3])
+      }
+      // console.log(this.statusList)
+
+      // console.log(this.upddataStateList)
+
+
+
+
+    },
+    //  一键导出excl
+    oneKeyExportExcl(){
+      var _this = this;
+
+      // _this.orderSpeed  =  0 ;
+
+      // var i = 0;
+      // var timer = setInterval(function () {
+      //     console.log(i++);
+      //     _this.orderSpeed  = _this.orderSpeed + 5;
+      //     if (i>10) {
+      //       clearInterval(timer);
+      //     }
+      // },1000)
+
+      if (!_this.orderExl.beginDate) {
+        _this.$notification.warning({
+          message: '提示',
+          description: "下单时间必填",
+        })
+        return false;
+      } else {
+        return exportPieSalaryRecordExcel({
+         orderStatus: _this.orderExl.orderStatus,
+         beginDate:_this.orderExl.beginDate + ' 00:00:00',
+         endDate: _this.orderExl.endDate + ' 23:59:59',
+         schoolName: _this.orderExl.schoolName,
+        })
+        .then((res) => {
+ 
+         // _this.orderSpeed = 100;
+         // _this.json_data = res.data;
+         var datatime  = _this.getCurrentTime();
+         // _this.exclName = "订单-"+datatime+".xls";l
+           const content = res.data;
+           const blob = new Blob([content], {type: 'application/vnd.ms-excel'});
+           let url = window.URL.createObjectURL(blob);
+           let link = document.createElement("a");
+           let filename = decodeURI(res.headers['filename']);
+           link.style.display = "none";
+           link.href = url;
+           link.setAttribute(
+             "download",
+             filename
+           );
+           document.body.appendChild(link);
+           link.click();
+
+            document.body.removeChild(link); //下载完成移除元素
+            window.URL.revokeObjectURL(url); //释放blob对象
+
+
+        })
+      }
+
+
+    },
+      //导出excl
+    exportExcl(){
+      var _this = this;
+
+      _this.orderSpeed  =  0 ;
+
+      var i = 0;
+      var timer = setInterval(function () {
+          console.log(i++);
+          _this.orderSpeed  = _this.orderSpeed + 5;
+          if (i>10) {
+            clearInterval(timer);
+          }
+      },1000)
+
+
+
+       return getOrderExcel({
+        orderStatus: _this.orderExl.orderStatus,
+        beginDate:_this.orderExl.beginDate,
+        endDate: _this.orderExl.endDate,
+        schoolName: _this.orderExl.schoolName,
+       })
+       .then((res) => {
+
+        _this.orderSpeed = 100;
+        _this.json_data = res.data;
+        var datatime  = _this.getCurrentTime();
+        _this.exclName = "订单-"+datatime+".xls";
+       })
+
+    },
+    // 删除
+    handleDel(record) {
+      var imgLIst = []
+      imgLIst.push(record.icon)
+      imgLIst.push(record.authentication)
+      return deleteCompany({ idArr: record.id, oldImg: imgLIst.join(',') }).then((res) => {
+        this.$refs.table.refresh(false)
+        this.$notification.success({
+          message: '提示',
+          description: res.message,
+        })
+      })
+    },
+    //取消订单
+    handleCane(record) {
+      if(record.orderStatus == 0){
+        this.orderFrom.orderSn = record.orderSn
+        this.orderFrom.orderStatus = 4;
+        // this.orderFrom.deliverySn = record.deliverySn
+        return updateOrderStatus(this.orderFrom).then((res) => {
+          if(res.code == 200){
+            this.$refs.table.refresh(false)
+            this.$notification.success({
+              message: '提示',
+              description: res.message,
+            })
+          }
+        })
+      }else{
+        this.$message.error('该功能还未实现！')
+      }
+    },
+    // 批量删除
+    deleteAll(record) {
+      var imgLIst = []
+      imgLIst.push(record.icon)
+      imgLIst.push(record.authentication)
+      if (this.selectedRowKeys.length > 0) {
+        var that = this
+        this.$confirm({
+          title: '警示',
+          content: '确定要全部删除吗?',
+          onOk() {
+            return deleteCompany({ idArr: that.selectedRowKeys.join(','), oldImg: imgLIst.join(',') }).then((res) => {
+              that.$refs.table.refresh(false)
+              that.$notification.success({
+                message: '提示',
+                description: res.message,
+              })
+            })
+          },
+          onCancel() {},
+        })
+      }
+    },
+    // 提交
+    handleOk(e) {
+
+      this.$refs.orderFrom.validate((valid) => {
+        // 校验未全部通过，结束当前提交 (验证失败)
+
+        if (!valid) {
+          return false
+        } else {
+          return Promise.all([
+            updateOrderSettlement({
+              id: this.orderFrom.id,
+              settlement: this.orderFrom.settlement,
+            }),
+            updateOrderStatus(this.orderFrom)
+          ]).then((res) => {
+            if(res[1].code == 200){
+              this.$refs.table.refresh(false)
+              this.visible = false
+              this.$notification.success({
+                message: '提示',
+                description: res[1].msg,
+              })
+            }
+
+          })
+        }
+      })
+      this.preview1 = false
+      this.preview = false
+    },
+    // 复选框选中触发事件
+    onSelectChange(selectedRowKeys, selectedRows) {
+      this.selectedRowKeys = selectedRowKeys
+      this.selectedRows = selectedRows
+    },
+    //取消右键菜单
+    cancelClick() {
+      this.menuVisible = false
+      document.body.removeEventListener('click', this.cancelClick)
+    },
+    setRow(record) {
+      return {
+        on: {
+          click: () => {},
+          // 右键菜单
+          contextmenu: (e) => {
+            e.preventDefault()
+            this.menuVisible = true
+            this.menuStyle.top = e.clientY + 'px'
+            this.menuStyle.left = e.clientX + 'px'
+            document.addEventListener('click', this.cancelClick)
+          },
+        },
+      }
+    },
+
+  },
+  mounted() {
+    
+  },
+  watch: {
+    // 去掉表单验证信息二次打开残留
+    visible(val, newVal) {
+      //监听的是控制模态框显示或隐藏开关的布尔值
+      // 监视dialog状态（打开、关闭）
+      if (val) {
+        try {
+          this.$refs['orderFrom'].clearValidate() // 重置编辑表单,移出验证
+        } catch (e) {}
+      }
+    },
+  },
+}
+</script>

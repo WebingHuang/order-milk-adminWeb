@@ -1,0 +1,124 @@
+import axios from 'axios'
+import store from '@/store'
+import storage from 'store'
+import notification from 'ant-design-vue/es/notification'
+import { VueAxios } from './axios'
+import { ACCESS_TOKEN } from '@/store/mutation-types'
+
+
+// 创建 axios 实例
+const request = axios.create({
+  // API 请求的默认前缀
+  baseURL: process.env.VUE_APP_API_BASE_URL,
+  // baseURL: "http://123.56.235.147:8081",
+  timeout: 1000 * 60 * 10 // 请求超时时间
+})
+
+// 异常拦截处理器
+const errorHandler = (error) => {
+  console.log(error.response)
+
+
+
+// debugger
+
+  if (error.response) {
+    const data = error.response.data
+    // 从 localstorage 获取 token
+    const token = storage.get(ACCESS_TOKEN)
+
+    if (error.response.status === 500) {
+      notification.error({
+        message: '异常提示',
+        description: data.msg ? data.msg : data.message
+      })
+    }
+
+
+    // alert()
+
+
+
+    if (error.response.data.message == '401') {
+      notification.error({
+        message: '登录身份过期',
+        description: '登录身份过期，请重新登录'
+      })
+
+      if (token) {
+
+        store.dispatch('Logout').then(() => {
+          setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+        })
+      }
+    }
+
+    // return
+
+
+
+    // if (error.response.data.message == '401' && !(data.result && data.result.isLogin)) {  //token 过期
+    //   notification.error({
+    //     message: '登录身份过期',
+    //     description: '登录身份过期，请重新登录'
+    //   })
+    //   if (token) {
+
+    //     store.dispatch('Logout').then(() => {
+    //       setTimeout(() => {
+    //         window.location.reload()
+    //       }, 1500)
+    //     })
+    //   }
+    // }
+
+
+    // if (error.response.status === 401 && !(data.result && data.result.isLogin)) {
+    //   notification.error({
+    //     message: 'Unauthorized',
+    //     description: 'Authorization verification failed'
+    //   })
+    //   if (token) {
+
+    //     store.dispatch('Logout').then(() => {
+    //       setTimeout(() => {
+    //         window.location.reload()
+    //       }, 1500)
+    //     })
+    //   }
+    // }
+  }
+  return Promise.reject(error)
+}
+
+// request interceptor
+request.interceptors.request.use(config => {
+  const token = storage.get(ACCESS_TOKEN)
+  // 如果 token 存在
+  // 让每个请求携带自定义 token 请根据实际情况自行修改
+  if (token) {
+    config.headers['Access-Token'] = token
+  }
+  return config
+}, errorHandler)
+
+// response interceptor
+request.interceptors.response.use((response) => {
+  return response.data
+}, errorHandler)
+
+const installer = {
+  vm: {},
+  install (Vue) {
+    Vue.use(VueAxios, request)
+  }
+}
+
+export default request
+
+export {
+  installer as VueAxios,
+  request as axios
+}

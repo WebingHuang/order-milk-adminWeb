@@ -1,0 +1,823 @@
+// eslint-disable-next-line
+import { UserLayout, BasicLayout, BlankLayout } from '@/layouts'
+import { bxAnaalyse } from '@/core/icons'
+
+const RouteView = {
+  name: 'RouteView',
+  render: (h) => h('router-view')
+}
+
+export const asyncRouterMap = [
+
+  {
+    path: '/',
+    name: 'index',
+    component: BasicLayout,
+    meta: { title: 'menu.home' },
+    redirect: '/dashboard/workplace',
+    children: [
+      // dashboard
+      {
+        path: '/dashboard',
+        name: 'dashboard',
+        redirect: '/dashboard/workplace',
+        component: RouteView,
+        meta: { title: 'menu.dashboard', keepAlive: true, icon: bxAnaalyse, permission: ['dashboard'] },
+        children: [
+          {
+            path: '/dashboard/analysis/:pageNo([1-9]\\d*)?',
+            name: 'analysis',
+            component: () => import('@/views/dashboard/Analysis'),
+            meta: { title: 'menu.dashboard.analysis', keepAlive: false, permission: ['analysis'] }
+          },
+          {
+            path: '/dashboard/workplace',
+            name: 'Workplace',
+            component: () => import('@/views/dashboard/Workplace'),
+            meta: { title: 'menu.dashboard.workplace', keepAlive: true, permission: ['Workplace'] }
+          }
+        ]
+      },
+      // article
+      // {
+      //   path: '/article',
+      //   redirect: '/form/base-form',
+      //   component: RouteView,
+      //   meta: { title: '文章管理', icon: 'file-text', permission: ['article']},
+      //   component: () => import('@/views/admin/article/ArticleLayout'),
+      //   children: [
+      //     {
+      //       path: '/article/articleTable',
+      //       name: 'articleTable',
+      //       hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+      //       component: () => import('@/views/admin/article/ArticleTable'),
+      //       meta: { title: '文章列表', permission: ['articleTable'] }
+      //     },
+      //     {
+      //       path: '/article/editArticle',
+      //       name: 'editArticle',
+      //       hideChildrenInMenu: true,
+      //       component: () => import('@/views/admin/article/EditArticle'),
+      //       meta: { title: '编辑文章', permission: ['editArticle'] }
+      //     },
+      //   ]
+      // },
+
+      // {
+      //   path: '/team',
+      //   // redirect: '/shop/ShopAdmin',
+      //   component: RouteView,
+      //   meta: { title: '团队管理', icon: 'shop', permission: ['team'] },
+      //    children: [
+      //     {
+      //       path: '/team/order',
+      //       name: 'teamorder',
+      //       hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+      //       component: () => import('@/views/team/order/Table'),
+      //       meta: { title: '订单管理', keepAlive: true, permission: ['team_order'] }
+      //     },
+      //     {
+      //       path: '/team/user',
+      //       name: 'teamuser',
+      //       hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+      //       component: () => import('@/views/team/user/Table'),
+      //       meta: { title: '用户管理', keepAlive: true, permission: ['team_user'] }
+      //     },
+
+      //   ]
+      //  },
+
+        // 商品管理
+
+        {
+          path: '/commodity',
+          // redirect: '/shop/ShopAdmin',
+          component: RouteView,
+          meta: { title: '商品管理', icon: 'shop', permission: ['commodity'] },
+           children: [
+            {
+              path: '/commodity/edit',
+              name: 'addcommodity',
+              hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+              component: () => import('@/views/commodity/Edit'),
+              meta: { title: '发布商品', keepAlive: true, permission: ['addcommodity'] }
+            },
+            {
+              path: '/commodity/table',
+              name: 'editcommodity',
+              hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+              component: () => import('@/views/commodity/Table'),
+              meta: { title: '管理商品', keepAlive: true, permission: ['editcommodity'] }
+            },
+            {
+              path: '/commodity/type',
+              name: 'commodity_type',
+              hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+              component: () => import('@/views/commodity/Type'),
+              meta: { title: '设置商品类', keepAlive: true, permission: ['commodity_type'] }
+            },
+
+          ]
+      },
+      // {
+      //   path: '/card/table',
+      //   name: 'card',
+      //   meta: { title: '臻香卡管理', icon: 'barcode', permission: ['card'] },
+      //   component: () => import('@/views/card/Table'),
+
+      // },
+      {
+        path: '/order/table',
+        name: 'order',
+        meta: { title: '订单管理', icon: 'file-search', permission: ['order'] },
+        component: () => import('@/views/order/Table'),
+
+      },
+      {
+        path: '/service/table',
+        name: 'service',
+        meta: { title: '售后服务', icon: 'file-search', permission: ['service'] },
+        component: () => import('@/views/service/Table'),
+
+      },
+
+      // {
+      //   path: '/bank/table',
+      //   name: 'bank',
+      //   meta: { title: '银行卡管理', icon: 'credit-card', permission: ['bank'] },
+      //   component: () => import('@/views/bank/Table'),
+
+      // },
+
+      // {
+      //   path: '/money',
+      //   meta: { title: '提现管理', icon: 'file-text', permission: ['money']},
+      //   component: RouteView,
+      //   children: [
+      //     {
+      //       path: '/money/table',
+      //       name: 'moneyTable',
+      //       component: () => import('@/views/money/Table'),
+      //       meta: { title: '管理提现', permission: ['moneyTable'] }
+      //     },
+      //     {
+      //       path: '/money/edit',
+      //       name: 'moneyetl',
+      //       component: () => import('@/views/money/Edit'),
+      //       meta: { title: '提现方案', permission: ['moneyetl'] }
+      //     },
+
+      //   ]
+      // },
+
+       {
+        path: '/notice',
+        meta: { title: '公告管理', icon: 'file-text', permission: ['notice']},
+        component: RouteView,
+        children: [
+          {
+            path: '/notice/table',
+            name: 'noticeTable',
+            component: () => import('@/views/notice/Table'),
+
+            // component: () => import('@/views/notice/Table'),
+            meta: { title: '管理公告', permission: ['noticeTable'] }
+          },
+          {
+            path: '/notice/edit',
+            name: 'editnotice',
+            hideChildrenInMenu: true,
+            component: () => import('@/views/notice/edit'),
+            meta: { title: '发布公告', permission: ['editnotice'] }
+          },
+        ]
+      },
+
+      {
+        path: '/introduce',
+        meta: { title: '公司介绍管理', icon: 'file-text', permission: ['introduce']},
+        component: RouteView,
+        children: [
+          {
+            path: '/introduce/table',
+            name: 'introduceTable',
+            component: () => import('@/views/introduce/Table'),
+
+            // component: () => import('@/views/notice/Table'),
+            meta: { title: '管理公司介绍', permission: ['introduceTable'] }
+          },
+          {
+            path: '/introduce/edit',
+            name: 'editintroduce',
+            hideChildrenInMenu: true,
+            component: () => import('@/views/introduce/edit'),
+            meta: { title: '发布公司介绍', permission: ['editintroduce'] }
+          },
+        ]
+      },
+
+      {
+        path: '/voucher',
+        // redirect: '/shop/ShopAdmin',
+        component: RouteView,
+        meta: { title: '凭证管理', icon: 'solution', permission: ['voucher'] },
+         children: [
+          {
+            path: '/voucher/finance',
+            name: 'finance_voucher',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/voucher/finance/Table'),
+            meta: { title: '财务凭证', keepAlive: true, permission: ['finance_voucher'] }
+          }
+
+        ]
+       },
+
+
+
+
+      {
+        path: '/resource',
+        // redirect: '/resource/ShopAdmin',
+        component: RouteView,
+        meta: { title: '资源管理', icon: 'appstore', permission: ['resources'] },
+        children: [
+          {
+            path: '/resource/swiper',
+            name: 'swiper',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/resource/swiper/Table'),
+            meta: { title: '轮播图管理', keepAlive: true, permission: ['swiper'] }
+          },
+          {
+            path: '/resource/video',
+            name: 'resource',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/resource/video/Table'),
+
+            meta: { title: '视频管理', keepAlive: true, permission: ['video'] }
+          },
+          {
+            path: '/resource/AddShop',
+            name: 'resource',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/admin/shop/AddShop'),
+            meta: { title: '微信配置', keepAlive: true, permission: ['resource2'] }
+          },
+        ]
+      },
+
+       // 店铺管理
+       {
+        path: '/shop',
+        // redirect: '/shop/ShopAdmin',
+        component: RouteView,
+        meta: { title: '店铺管理', icon: 'appstore', permission: ['shop'] },
+        children: [
+          {
+            path: '/shop/table',
+            name: 'shopadmin',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/shop/Table'),
+            meta: { title: '管理店铺', keepAlive: true, permission: ['shopadmin'] }
+          },
+          {
+            path: '/shop/edit',
+            name: 'addshop',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/shop/Edit'),
+            meta: { title: '新增店铺', keepAlive: true, permission: ['addshop'] }
+          },
+        ]
+      },
+
+
+
+      // 审批管理
+      // {
+      //   path: '/examine',
+      //   redirect: '/form/base-form',
+      //   component: RouteView,
+      //   meta: { title: '审批管理', icon: 'file-search', permission: ['examine'] },
+      //   children: [
+      //     // {
+      //     //   path: '/article/articlemanagement',
+      //     //   name: 'articletrial',
+      //     //   hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+      //     //   component: () => import('@/views/admin/article/ArticleManagement'),
+      //     //   meta: { title: '文章审批', keepAlive: true, permission: ['articletrial'] }
+      //     // },
+      //     // {
+      //     //   path: '/article/Companyagement',
+      //     //   name: 'companytrial',
+      //     //   hideChildrenInMenu: true,
+      //     //   component: () => import('@/views/admin/company/Companyagement'),
+      //     //   meta: { title: '公司审批', keepAlive: true, permission: ['companytrial'] }
+      //     // },
+      //     // {
+      //     //   path: '/article/RequirementsReview',
+      //     //   name: 'demandtrial',
+      //     //   hideChildrenInMenu: true,
+      //     //   component: () => import('@/views/admin/company/RequirementsReview'),
+      //     //   meta: { title: '需求审批', keepAlive: true, permission: ['demandtrial'] }
+      //     // },
+      //     {
+      //       path: '/shop/shoptrial',
+      //       name: 'shoptrial',
+      //       hideChildrenInMenu: true,
+      //       component: () => import('@/views/admin/shop/ShopApproval'),
+      //       meta: { title: '店铺审批', keepAlive: true, permission: ['shoptrial'] }
+      //     },
+      //     // {
+      //     //   path: '/seniority',
+      //     //   name: 'seniority',
+      //     //   component: RouteView,
+      //     //   meta: { title: '资质审批', keepAlive: true, permission: ['seniority'] },
+      //     //   children: [
+      //     //     {
+      //     //       path: '/seniority/business',
+      //     //       name: 'business',
+      //     //       component: () => import('@/views/seniority/business'),
+      //     //       meta: { title: '服务商认证审批', permission: ['business'] }
+      //     //     },
+      //     //     {
+      //     //       path: '/seniority/mechanism',
+      //     //       name: 'mechanism',
+      //     //       component: () => import('@/views/seniority/mechanism'),
+      //     //       meta: { title: '主播/招商机构认证审批', permission: ['mechanism'] }
+      //     //     },
+      //     //     {
+      //     //       path: '/seniority/shopvoucher',
+      //     //       name: 'shopvoucher',
+      //     //       component: () => import('@/views/seniority/shopvoucher'),
+      //     //       meta: { title: '店铺认证审批', permission: ['shopvoucher'] }
+      //     //     },
+      //     //   ]
+
+      //     // },
+      //     {
+      //       path: '/realName',
+      //       name: 'realName',
+      //       component: RouteView,
+      //       meta: { title: '实名认证审批', keepAlive: true, permission: ['realName'] },
+      //       children: [
+      //         {
+      //           path: '/seniority/personal',
+      //           name: 'personal',
+      //           component: () => import('@/views/seniority/personal'),
+      //           meta: { title: '个人认证审批', permission: ['personal'] }
+      //         },
+      //         // {
+      //         //   path: '/seniority/enterprise',
+      //         //   name: 'enterprise',
+      //         //   component: () => import('@/views/seniority/enterprise'),
+      //         //   meta: { title: '公司认证审批', permission: ['enterprise'] }
+      //         // },
+      //       ]
+
+      //     },
+      //   ]
+      // },
+      // {
+      //   path: '/company',
+      //   redirect: '/form/base-form',
+      //   component: RouteView,
+      //   meta: { title: '公司管理', icon: 'bank', permission: ['company'] },
+      //   children: [
+      //     {
+      //       path: '/company/Management',
+      //       name: 'companytable',
+      //       hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+      //       component: () => import('@/views/admin/company/Management'),
+      //       meta: { title: '管理公司', keepAlive: true, permission: ['companytable'] }
+      //     },
+      //     {
+      //       path: '/company/Audit',
+      //       name: 'addcompany',
+      //       hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+      //       component: () => import('@/views/admin/company/Audit'),
+      //       meta: { title: '新增公司', keepAlive: true, permission: ['addcompany'] }
+      //     },
+      //     {
+      //       path: '/company/UserAdmin',
+      //       name: 'company-users',
+      //       hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+      //       component: () => import('@/views/admin/company/UserAdmin'),
+      //       meta: { title: '用户管理', keepAlive: true, permission: ['company-users'] }
+      //     },
+      //   ]
+      // },
+
+      // 应用管理
+      // {
+      //   path: '/application',
+      //   redirect: '/application/ApplicationList',
+      //   component: RouteView,
+      //   meta: { title: '应用管理', icon: 'appstore', permission: ['application'] },
+      //   children: [
+      //     {
+      //       path: '/application/ApplicationList',
+      //       name: 'ApplicationList',
+      //       component: () => import('@/views/admin/application/ApplicationList'),
+      //       meta: { title: '应用列表', keepAlive: true, permission: ['ApplicationList'] }
+      //     },
+      //   ]
+      // },
+
+      // forms
+      // {
+      //   path: '/form',
+      //   redirect: '/form/base-form',
+      //   component: RouteView,
+      //   meta: { title: '表单页', icon: 'form', permission: ['form'] },
+      //   children: [
+      //     {
+      //       path: '/form/base-form',
+      //       name: 'BaseForm',
+      //       component: () => import('@/views/form/basicForm'),
+      //       meta: { title: '基础表单', keepAlive: true, permission: ['BaseForm'] }
+      //     },
+      //     {
+      //       path: '/form/step-form',
+      //       name: 'StepForm',
+      //       component: () => import('@/views/form/stepForm/StepForm'),
+      //       meta: { title: '分步表单', keepAlive: true, permission: ['StepForm'] }
+      //     },
+      //     {
+      //       path: '/form/advanced-form',
+      //       name: 'AdvanceForm',
+      //       component: () => import('@/views/form/advancedForm/AdvancedForm'),
+      //       meta: { title: '高级表单', keepAlive: true, permission: ['AdvanceForm'] }
+      //     }
+      //   ]
+      // },
+
+      // list
+      // {
+      //   path: '/list',
+      //   name: 'list',
+      //   component: RouteView,
+      //   redirect: '/list/table-list',
+      //   meta: { title: '列表页', icon: 'table', permission: ['list'] },
+      //   children: [
+      //     {
+      //       path: '/list/table-list/:pageNo([1-9]\\d*)?',
+      //       name: 'TableListWrapper',
+      //       hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+      //       component: () => import('@/views/list/TableList'),
+      //       meta: { title: '查询表格', keepAlive: true, permission: ['list'] }
+      //     },
+      //     {
+      //       path: '/list/basic-list',
+      //       name: 'BasicList',
+      //       component: () => import('@/views/list/BasicList'),
+      //       meta: { title: '标准列表', keepAlive: true, permission: ['list'] }
+      //     },
+      //     {
+      //       path: '/list/card',
+      //       name: 'CardList',
+      //       component: () => import('@/views/list/CardList'),
+      //       meta: { title: '卡片列表', keepAlive: true, permission: ['list'] }
+      //     },
+      //     {
+      //       path: '/list/search',
+      //       name: 'SearchList',
+      //       component: () => import('@/views/list/search/SearchLayout'),
+      //       redirect: '/list/search/article',
+      //       meta: { title: '搜索列表', keepAlive: true, permission: ['list'] },
+      //       children: [
+      //         {
+      //           path: '/list/search/article',
+      //           name: 'SearchArticles',
+      //           component: () => import('../views/list/search/Article'),
+      //           meta: { title: '搜索列表（文章）', permission: ['list'] }
+      //         },
+      //         {
+      //           path: '/list/search/project',
+      //           name: 'SearchProjects',
+      //           component: () => import('../views/list/search/Projects'),
+      //           meta: { title: '搜索列表（项目）', permission: ['list'] }
+      //         },
+      //         {
+      //           path: '/list/search/application',
+      //           name: 'SearchApplications',
+      //           component: () => import('../views/list/search/Applications'),
+      //           meta: { title: '搜索列表（应用）', permission: ['list'] }
+      //         }
+      //       ]
+      //     }
+      //   ]
+      // },
+
+      // profile
+      // {
+      //   path: '/profile',
+      //   name: 'profile',
+      //   component: RouteView,
+      //   redirect: '/profile/basic',
+      //   meta: { title: '详情页', icon: 'profile', permission: ['profile'] },
+      //   children: [
+      //     {
+      //       path: '/profile/basic',
+      //       name: 'ProfileBasic',
+      //       component: () => import('@/views/profile/basic'),
+      //       meta: { title: '基础详情页', permission: ['profile'] }
+      //     },
+      //     {
+      //       path: '/profile/advanced',
+      //       name: 'ProfileAdvanced',
+      //       component: () => import('@/views/profile/advanced/Advanced'),
+      //       meta: { title: '高级详情页', permission: ['profile'] }
+      //     }
+      //   ]
+      // },
+
+      // result
+      // {
+      //   path: '/result',
+      //   name: 'result',
+      //   component: RouteView,
+      //   redirect: '/result/success',
+      //   meta: { title: '结果页', icon: 'check-circle-o', permission: ['result'] },
+      //   children: [
+      //     {
+      //       path: '/result/success',
+      //       name: 'ResultSuccess',
+      //       component: () => import(/* webpackChunkName: "result" */ '@/views/result/Success'),
+      //       meta: { title: '成功', keepAlive: false, hiddenHeaderContent: true, permission: ['result'] }
+      //     },
+      //     {
+      //       path: '/result/fail',
+      //       name: 'ResultFail',
+      //       component: () => import(/* webpackChunkName: "result" */ '@/views/result/Error'),
+      //       meta: { title: '失败', keepAlive: false, hiddenHeaderContent: true, permission: ['result'] }
+      //     }
+      //   ]
+      // },
+
+      // Exception
+      // {
+      //   path: '/exception',
+      //   name: 'exception',
+      //   component: RouteView,
+      //   redirect: '/exception/403',
+      //   meta: { title: '异常页', icon: 'warning', permission: ['exception'] },
+      //   children: [
+      //     {
+      //       path: '/exception/403',
+      //       name: 'Exception403',
+      //       component: () => import(/* webpackChunkName: "fail" */ '@/views/exception/403'),
+      //       meta: { title: '403', permission: ['exception'] }
+      //     },
+      //     {
+      //       path: '/exception/404',
+      //       name: 'Exception404',
+      //       component: () => import(/* webpackChunkName: "fail" */ '@/views/exception/404'),
+      //       meta: { title: '404', permission: ['exception'] }
+      //     },
+      //     {
+      //       path: '/exception/500',
+      //       name: 'Exception500',
+      //       component: () => import(/* webpackChunkName: "fail" */ '@/views/exception/500'),
+      //       meta: { title: '500', permission: ['exception'] }
+      //     }
+      //   ]
+      // },
+      {
+        path: '/admin',
+        redirect: '/form/base-form',
+        component: RouteView,
+        meta: { title: '系统管理', icon: 'setting', permission: ['admin'] },
+        children: [
+          {
+            path: '/system/school',
+            name: 'schools',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/system/school/Table'),
+            meta: { title: '学校管理', keepAlive: true, permission: ['roles'] }
+          },
+          {
+            path: '/system/school',
+            name: 'schools',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/system/school/Table'),
+            meta: { title: '学校设置', keepAlive: true, permission: ['schools'] }
+          },
+          // {
+          //   path: '/admin/system/test',
+          //   name: 'test',
+          //   hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+          //   component: () => import('@/views/admin/system/test'),
+          //   meta: { title: '测试', keepAlive: true, permission: ['test'] }
+          // },
+          {
+            path: '/system/power',
+            name: 'power',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/system/power/Table'),
+            meta: { title: '权限管理', keepAlive: true, permission: ['power'] }
+          },
+          // {
+          //   path: '/system/Management',
+          //   name: 'syscompanytable',
+          //   hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+          //   component: () => import('@/views/admin/system/Management'),
+          //   meta: { title: '公司管理', keepAlive: true, permission: ['syscompanytable'] }
+          // },
+          {
+            path: '/system/user',
+            name: 'users',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/system/user/Table'),
+            meta: { title: '用户管理', keepAlive: true, permission: ['users'] }
+          },
+          {
+            path: '/system/role',
+            name: 'roles',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/system/role/Table'),
+            meta: { title: '角色管理', keepAlive: true, permission: ['roles'] }
+          },
+          {
+            path: '/system/menu',
+            name: 'router',
+            hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+            component: () => import('@/views/system/menu/Table'),
+            meta: { title: '菜单管理', keepAlive: true, permission: ['router'] }
+          },
+          // {
+          //   path: '/system/shopadmin',
+          //   name: 'sys-shopadmin',
+          //   hideChildrenInMenu: true, // 强制显示 MenuItem 而不是 SubMenu
+          //   component: () => import('@/views/admin/system/ShopAdmin'),
+          //   meta: { title: '店铺管理', keepAlive: true, permission: ['sys-shopadmin'] }
+          // },
+        ]
+      },
+
+      // account
+      {
+        path: '/account',
+        component: RouteView,
+        redirect: '/account/center',
+        name: 'account',
+        meta: { title: '个人页', icon: 'user', keepAlive: true, permission: ['account'] },
+        children: [
+          // {
+          //   path: '/account/center',
+          //   name: 'center',
+          //   component: () => import('@/views/account/center'),
+          //   meta: { title: '个人中心', keepAlive: true, permission: ['user'] }
+          // },
+          {
+            path: '/account/settings',
+            name: 'settings',
+            component: () => import('@/views/account/settings/Index'),
+            meta: { title: '个人设置', hideHeader: true, permission: ['settings'] },
+            redirect: '/account/settings/base',
+            hideChildrenInMenu: true,
+            children: [
+              {
+                path: '/account/settings/base',
+                name: 'BaseSettings',
+                component: () => import('@/views/account/settings/BaseSetting'),
+                meta: { title: '基本设置', hidden: true, permission: ['settings'] }
+              },
+              {
+                path: '/account/settings/security',
+                name: 'SecuritySettings',
+                component: () => import('@/views/account/settings/Security'),
+                meta: { title: '安全设置', hidden: true, keepAlive: true, permission: ['settings'] }
+              },
+              {
+                path: '/account/settings/custom',
+                name: 'CustomSettings',
+                component: () => import('@/views/account/settings/Custom'),
+                meta: { title: '个性化设置', hidden: true, keepAlive: true, permission: ['user'] }
+              },
+              {
+                path: '/account/settings/binding',
+                name: 'BindingSettings',
+                component: () => import('@/views/account/settings/Binding'),
+                meta: { title: '账户绑定', hidden: true, keepAlive: true, permission: ['user'] }
+              },
+              {
+                path: '/account/settings/notification',
+                name: 'NotificationSettings',
+                component: () => import('@/views/account/settings/Notification'),
+                meta: { title: '新消息通知', hidden: true, keepAlive: true, permission: ['user'] }
+              }
+            ]
+          }
+        ]
+      }
+
+      // other
+      /*
+      {
+        path: '/other',
+        name: 'otherPage',
+        component: PageView,
+        meta: { title: '其他组件', icon: 'slack', permission: [ 'dashboard' ] },
+        redirect: '/other/icon-selector',
+        children: [
+          {
+            path: '/other/icon-selector',
+            name: 'TestIconSelect',
+            component: () => import('@/views/other/IconSelectorView'),
+            meta: { title: 'IconSelector', icon: 'tool', keepAlive: true, permission: [ 'dashboard' ] }
+          },
+          {
+            path: '/other/list',
+            component: RouteView,
+            meta: { title: '业务布局', icon: 'layout', permission: [ 'support' ] },
+            redirect: '/other/list/tree-list',
+            children: [
+              {
+                path: '/other/list/tree-list',
+                name: 'TreeList',
+                component: () => import('@/views/other/TreeList'),
+                meta: { title: '树目录表格', keepAlive: true }
+              },
+              {
+                path: '/other/list/edit-table',
+                name: 'EditList',
+                component: () => import('@/views/other/TableInnerEditList'),
+                meta: { title: '内联编辑表格', keepAlive: true }
+              },
+              {
+                path: '/other/list/user-list',
+                name: 'UserList',
+                component: () => import('@/views/other/UserList'),
+                meta: { title: '用户列表', keepAlive: true }
+              },
+              {
+                path: '/other/list/role-list',
+                name: 'RoleList',
+                component: () => import('@/views/other/RoleList'),
+                meta: { title: '角色列表', keepAlive: true }
+              },
+              {
+                path: '/other/list/system-role',
+                name: 'SystemRole',
+                component: () => import('@/views/role/RoleList'),
+                meta: { title: '角色列表2', keepAlive: true }
+              },
+              {
+                path: '/other/list/permission-list',
+                name: 'PermissionList',
+                component: () => import('@/views/other/PermissionList'),
+                meta: { title: '权限列表', keepAlive: true }
+              }
+            ]
+          }
+        ]
+      }
+      */
+    ]
+  },
+  {
+    path: '*', redirect: '/404', hidden: true
+  }
+]
+
+/**
+ * 基础路由
+ * @type { *[] }
+ */
+export const constantRouterMap = [
+  {
+    path: '/user',
+    component: UserLayout,
+    redirect: '/user/login',
+    hidden: true,
+    children: [
+      {
+        path: 'login',
+        name: 'login',
+        component: () => import(/* webpackChunkName: "user" */ '@/views/user/Login')
+      },
+      {
+        path: 'register',
+        name: 'register',
+        component: () => import(/* webpackChunkName: "user" */ '@/views/user/Register')
+      },
+      {
+        path: 'register-result',
+        name: 'registerResult',
+        component: () => import(/* webpackChunkName: "user" */ '@/views/user/RegisterResult')
+      },
+      {
+        path: 'recover',
+        name: 'recover',
+        component: undefined
+      }
+    ]
+  },
+
+  {
+    path: '/404',
+    component: () => import(/* webpackChunkName: "fail" */ '@/views/exception/404')
+  }
+
+]

@@ -1,0 +1,1152 @@
+<template>
+   <div id="shopedit">
+      <page-header-wrapper>
+         <a-card :bordered="false">
+           <div class="">
+             <div class="">
+                <a-form layout="horizontal">
+                  <a-form-model :label-col="labelCol" :wrapper-col="wrapperCol" ref="commodityForm" :model="commodityForm">
+                    <div class="commodityForm">
+                      <div class="lfte">
+
+                          <a-form-model-item label="商品名称" :required="true">
+                              <a-input  v-model="commodityForm.name" />
+                          </a-form-model-item>
+                          <a-form-model-item label="是否上架" >
+                               <a-switch default-checked :checked="commodityForm.isEnable" @click="commodityForm.isEnable = !commodityForm.isEnable"/>
+                          </a-form-model-item>
+                          <a-form-model-item label="是否在首页展示" >
+                               <a-switch default-checked :checked="commodityForm.isFlag" @click="commodityForm.isFlag = !commodityForm.isFlag"/>
+                          </a-form-model-item>
+                          <!-- <a-form-model-item label="设置为活动商品" >
+                               <a-switch default-checked :checked="commodityForm.isActivity" @click="commodityForm.isActivity = !commodityForm.isActivity"/>
+                          </a-form-model-item>
+                          <a-form-model-item label="是否为臻香卡" >
+                                <a-switch default-checked :checked="commodityForm.isAgent" @click="commodityForm.isAgent = !commodityForm.isAgent"/>
+                            </a-form-model-item> -->
+                          <a-form-model-item label="商品类别"  :required="true" v-if="!commodityForm.isAgent">
+                              <a-select mode="combobox" style="width: 100%"  v-model="commodityForm.type" @change="commodityYtpeChange">
+                                <a-select-option v-for="(item) in commodityTypeList" :key="item">
+                                  {{item}}
+                                </a-select-option>
+                              </a-select>
+                          </a-form-model-item>
+
+                          <a-form-model-item label="上传封面"  :required="true">
+                              <a-upload
+                                name="avatar"
+                                list-type="picture-card"
+                                class="avatar-uploader"
+                                :show-upload-list="false"
+                                :before-upload="beforeUpload1"
+                                @change="handleChange1"
+                              >
+                                <img v-if="commodityForm.cover" :src="commodityForm.cover" alt="avatar" />
+                                <div v-else>
+                                  <a-icon :type="loading ? 'loading' : 'plus'" />
+                                  <div class="ant-upload-text">
+                                    上传
+                                  </div>
+                                </div>
+                              </a-upload>
+
+                          </a-form-model-item>
+                          <a-form-model-item label="轮播图" :required="true">
+                              <a-upload
+                              :multiple="true"
+                              list-type="picture-card"
+                              class="avatar-uploader"
+                              :file-list="fileList"
+                              @preview="handlePreview"
+                              @change="handleChange2"
+                              :before-upload="beforeUpload2"
+
+                            >
+                              <div v-if="fileList.length < 8">
+                                <a-icon type="plus" />
+                                <div class="ant-upload-text">
+                                  上传
+                                </div>
+                              </div>
+                            </a-upload>
+
+                            <a-modal :visible="previewVisible" :footer="null" @cancel="handleCancel">
+                              <img alt="example" style="width: 100%" :src="previewImage" />
+                            </a-modal>
+
+                          </a-form-model-item>
+
+
+
+
+
+
+                            <!-- <a-form-model-item label="是否包邮">
+                                <a-switch default-checked :checked="commodityForm.shipping" @click="commodityForm.shipping = !commodityForm.shipping"/>
+                            </a-form-model-item> -->
+
+                            <!-- <a-form-model-item label="邮费" :required="true" v-if="!commodityForm.shipping">
+                              <a-input  v-model="commodityForm.shippingCost"/>
+                            </a-form-model-item> -->
+
+                            <a-form-model-item label="商品规格" :required="true" >
+                               <div class="specs_list">
+
+                                <div class="specs_list_item"  v-for="(item,index) in specsList" :key="index">
+                                  <div class="specs_list_item_lfte">
+                                    <a-form-item label="名称"  :labelCol="{ lg: { span: 6 }, sm: { span: 16 } }" :required="true">
+                                      <a-input  v-model="item.name" size="small" />
+                                    </a-form-item>
+
+                                    <a-form-item label="单价" :labelCol="labelCol2" :required="true">
+                                      <a-input  v-model="item.price" size="small"/>
+                                    </a-form-item>
+
+                                    <!-- <a-form-item label="容量">
+                                      <a-input  v-model="item.capacity" size="small"/>
+                                    </a-form-item> -->
+                                    <a-form-item label="库存数量" :labelCol="labelCol2" :required="true">
+                                      <a-input  v-model="item.number" size="small"/>
+                                    </a-form-item>
+                                    <!-- <a-form-item label="臻香卡优惠价"  :labelCol="labelCol2">
+                                      <a-input  v-model="item.coupon" size="small"/>
+                                    </a-form-item>
+                                    <a-form-item label="会员优惠价"  :labelCol="labelCol2">
+                                      <a-input  v-model="item.vipAmount" size="small"/>
+                                    </a-form-item> -->
+
+                                    <a-form-item label="封面" style="width: 150px;"  :labelCol="labelCol2">
+                                      <div  @click="clickImg(index)">
+                                           <a-upload
+                                        :name="'avatar'+index"
+                                        list-type="picture-card"
+                                        class="avatar-uploader"
+                                        :show-upload-list="false"
+                                        :before-upload="beforeUpload3"
+                                        @change="handleChange3"
+                                      >
+                                        <img v-if="item.img" :src="item.img" alt="avatar"    />
+                                        <div v-else   >
+                                          <a-icon type="plus"  />
+
+                                        </div>
+                                      </a-upload>
+                                      </div>
+
+                                    </a-form-item>
+                                  </div>
+                                  <div class="specs_list_item_right" style="width: 66px;">
+                                    <a-button-group>
+                                      <a-button  icon="plus" @click="addSpecs" size="small"/>
+                                      <a-button  icon="minus" @click="delSpecs(item,index)" v-if="!item.isone" size="small"/>
+                                    </a-button-group>
+                                  </div>
+
+
+                                </div>
+
+                              </div>
+                            </a-form-model-item>
+
+
+
+                      </div>
+
+                      <div class="right">
+                        <a-form-model-item label="图文详情">
+                           <quill-editor
+                            :content="contents"
+                            class="editor"
+                            ref="myTextEditor"
+                            v-model="content"
+                            :options="editorOptions"
+                            >
+                            </quill-editor>
+                        </a-form-model-item>
+                      </div>
+                    </div>
+
+
+                  </a-form-model>
+                  <a-form-item :wrapperCol="{ span: 19, offset: 5 }">
+                     <a-button type="primary" @click="postFormData">提交</a-button>
+                  </a-form-item>
+               </a-form>
+             </div>
+           </div>
+         </a-card>
+      </page-header-wrapper>
+   </div>
+</template>
+
+<script>
+// 引入新建接口
+
+
+
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
+import { quillEditor, Quill } from 'vue-quill-editor'
+import {container, ImageExtend, QuillWatch} from 'quill-image-extend-module'
+import { editorOptions } from '@/utils/vue-quill-editor-config'
+
+Quill.register('modules/ImageExtend', ImageExtend)
+
+
+// 增删改查接口
+
+import { uploadFiles } from '@/api/system'
+
+import { addCommodity ,getTypeList,getCommodityInfoById} from '@/api/commodity'
+
+import Bus from '@/utils/bus.js'
+
+
+
+
+
+
+
+function getBase64(img, callback) {
+  const reader = new FileReader();
+  reader.addEventListener('load', () => callback(reader.result));
+  reader.readAsDataURL(img);
+}
+
+
+
+export default {
+   name: 'shopedit',
+   components: {
+     quillEditor
+
+   },
+   data() {
+      return {
+         //商品类别
+         commodityTypeList:[],
+         imgIndex:0,
+         specsList:[{
+           img:"",
+           imgUrl:"",
+           imgList:[],
+          //  coupon:"",
+          //  vipAmount:"", //会员优惠价
+           name:"",
+           price:"", //价格
+           number:"", //
+           color:"", //颜色
+           isone:true, //是否是第一条
+           capacity:"",//容量
+           company:['ml','L'],//单位
+         }],
+         editorOptions: editorOptions,
+         content:"",
+         contents:'',
+         loading:false,
+         preview: false,
+         type: '',
+         // 店铺类型下拉
+         size: 'default',
+         // 储存图片的数组
+         fileList: [],
+         previewVisible: false,
+         previewImage: '',
+         commodityForm:{
+
+           name: '', //商品名称
+           number:"", //商品数量
+           price:"",
+           cover:"", //封面
+           imgUrl:"",
+           swiperList:[], //
+          //  isActivity:false, //是否设置为活动商品
+           isEnable:true, //是否上下架（默认上架）
+          //  isAgent:false, //是否代理商可见
+           isFlag:false, // 是否在首页展示
+           html:"", //图文详情
+           shipping:true, //是否包邮
+           shippingCost:"", //邮费
+           type:"", //商品类型
+
+         },
+
+         labelCol2: { lg: { span: 12 }, sm: { span: 16 } },
+
+
+         labelCol: { lg: { span: 2 }, sm: { span: 4 } },
+         wrapperCol: { lg: { span: 20 }, sm: { span: 20 } },
+         currentTab: 0,
+         // form
+
+         // 表单验证
+         rules: {
+
+         },
+         num:1
+      }
+   },
+   methods: {
+
+
+    commodityYtpeChange(value){
+      console.log(value)
+
+      console.log(this.commodityTypeList)
+
+    },
+
+     //查询商品类型
+    getTypeList(){
+
+       return getTypeList()
+       .then((res) => {
+        //  console.log(res.data)
+         this.commodityTypeList = [];
+
+         res.data.map((item)=>{
+           this.commodityTypeList.push(item.spuType);
+         })
+
+       })
+
+    },
+    //根据id查询商品详情
+    getCommodityInfoById(id){
+
+      var _this = this;
+
+
+       return getCommodityInfoById({
+         id:id
+       })
+       .then((res) => {
+
+         var data = res.data;
+
+
+         _this.commodityForm.name = data.spuName; //商品名称
+
+         _this.commodityForm.type = data.spuType; //商品类型
+         _this.commodityForm.cover = data.imgUrl; //首图
+         _this.commodityForm.imgUrl = data.imgUrl; //首图
+
+
+
+
+        //  if(data.isActivity == 1){
+        //     _this.commodityForm.isActivity = true;
+        //  }else{
+        //     _this.commodityForm.isActivity = false;
+        //  }
+
+
+         if(data.publishStatus == 1){
+            _this.commodityForm.isEnable = true;
+         }else{
+            _this.commodityForm.isEnable = false;
+         }
+
+
+         if(data.isCard == 1){
+          _this.commodityForm.isAgent = true;
+         }else{
+          _this.commodityForm.isAgent = false;
+         }
+
+         if(data.homeStatus == 1){
+          _this.commodityForm.isFlag = true;
+         }else{
+          _this.commodityForm.isFlag = false;
+         }
+
+
+
+
+
+
+
+
+         //循环添加轮播图
+         data.productSpuImagesEntities.map(item=>{
+
+           _this.fileList.push({
+              id: item.id,
+              uid: item.id,
+              name: 'image.png',
+              status: 'done',
+              url: item.imgUrl,
+           })
+         });
+
+
+
+
+        if(data.productSkuInfoEntities.length > 0){
+          _this.specsList = [];
+        }
+
+         data.productSkuInfoEntities.map((item,index)=>{
+
+
+            _this.specsList.push({
+              id:item.id,
+              img:item.skuDefaultImg,
+              imgUrl:item.skuDefaultImg,
+              imgList:[],
+              // coupon:item.coupon,
+              // vipAmount:item.vipAmount,
+              name:item.skuName,
+              price:item.price, //价格
+              number:item.stock, //
+              color:"", //颜色
+              isone:false, //是否是第一条
+              capacity:item.capacity,//容量
+              company:['ml','L'],//单位
+            })
+
+            if(index == 0){
+              _this.specsList[0].isone = true;
+            }
+
+         });
+
+
+         data.productSpuInfoDescEntities.map(item=>{
+            _this.contents = item.decript;
+         });
+
+
+        //  console.log(_this.commodityForm)
+
+
+         _this.$forceUpdate();
+
+
+
+
+
+
+       });
+
+    },
+     //初始化当前页面
+
+     init(){
+       this.commodityForm.name = "";
+       this.commodityForm.number = "";
+       this.commodityForm.price = "";
+       this.commodityForm.cover = "";
+       this.commodityForm.imgUrl = "";
+       this.commodityForm.swiperList = [];
+
+
+      //  this.commodityForm.isActivity = false;
+       this.commodityForm.isEnable = true;
+       this.commodityForm.html = "";
+       this.commodityForm.shipping = "";
+       this.commodityForm.shippingCost = "";
+
+       this.specsList = [{
+           img:"",
+           imgUrl:"",
+           imgList:[],
+          //  coupon:"",
+          //  vipAmount:"", //会员优惠价格
+           name:"",
+           price:"", //价格
+           number:"", //
+           color:"", //颜色
+           isone:true, //是否是第一条
+           capacity:"",//容量
+           company:['ml','L'],//单位
+       }];
+
+       this.imgIndex = 0;
+
+       this.fileList =[];
+
+       this.previewImage = '';
+       this.content = '';
+
+      this.$router.push('/commodity/edit');
+
+
+
+
+
+
+
+     },
+
+     clickImg(index){
+      //  console.log(index)
+       this.imgIndex = index;
+
+     },
+      // 添加规格
+      addSpecs(){
+
+
+
+        this.specsList.push({
+          img:"",
+          imgUrl:"",
+          imgList:[],
+          name:"",
+          // coupon:"",
+          // vipAmount:"",//会员优惠价
+          isone:false, //是否是第一条
+          number:"", //
+          price:"", //价格
+          color:"", //颜色
+          capacity:"",//容量
+          company:['ml','L'],//单位
+        })
+
+      },
+      //删除规格
+      delSpecs(item,index){
+
+      this.specsList.splice(index,1)
+
+
+
+        // console.log(index)
+
+
+      },
+
+
+
+      async handlePreview(file) {
+
+        // console.log(file)
+
+
+        // if (!file.url && !file.preview) {
+        //     file.preview = await getBase64(file.originFileObj);
+        // }
+        //   this.previewImage = file.url || file.preview;
+        if( file.thumbUrl){
+          this.previewImage = file.thumbUrl ;
+        }else{
+          this.previewImage = file.url;
+
+        }
+
+          this.previewVisible = true;
+      },
+      handleChange2({ fileList}) {
+
+        this.fileList = fileList;
+
+      },
+      beforeUpload2(file) {
+
+         const reader = new FileReader();
+         reader.readAsDataURL(file)
+         reader.onload = () => {
+
+         }
+
+         return false
+      },
+
+      handleCancel() {
+        this.previewVisible = false;
+      },
+      // 添加l轮播图片
+      addWeiper(){
+
+
+        var _this = this;
+
+        if(_this.fileList.length==0){
+          _this.$message.warning('轮播图不能为空')
+
+        }
+
+        // console.log(_this.fileList);
+
+        var imgList = [];
+
+        var httpImgList = [];
+
+
+
+        //
+        _this.fileList.forEach((item,index)=>{
+          if(item.thumbUrl){
+            imgList.push(item);
+          }else{
+            httpImgList.push(item);
+          }
+        });
+
+        if(_this.commodityForm.isAgent){
+          _this.commodityForm.type = '';
+        }
+
+        console.log(_this.commodityForm.isAgent)
+
+        if(!_this.commodityForm.isAgent && _this.commodityForm.type ==''){
+          console.log(_this.commodityForm.type)
+        }
+
+
+
+
+
+
+        const formData = new FormData();
+
+        imgList.forEach(function(item) {
+          formData.append('files', item.originFileObj)
+        })
+
+        // console.log(_this.commodityForm)
+
+        // return
+
+        if( imgList.length>0){
+          return uploadFiles(formData)
+          .then((res) => {
+
+            if(res.code == 200){
+
+
+              var data ={
+                id:Number(this.commodityForm.id),
+                spuName:_this.commodityForm.name,
+                homeStatus:_this.commodityForm.isFlag ? 1 : 0,
+                // isActivity:_this.commodityForm.isActivity ? 1 : 0,
+
+                imgUrl:_this.commodityForm.imgUrl,
+                spuType:_this.commodityForm.type,
+
+                productSpuInfoDescEntities:[{
+                  spuId:_this.commodityForm.id ? _this.commodityForm.id : '',
+                  decript:_this.content
+                }],
+
+                productSpuImagesEntities: [],
+
+                feight:_this.commodityForm.shippingCost || 0,
+                productSkuInfoEntities:[],
+
+              }
+
+
+
+
+
+              res.imgesList.map(item=>{
+
+                httpImgList.push(item);
+
+              });
+
+              _this.commodityForm.swiperList = httpImgList;
+              // this.$message.success('上传成功')
+
+
+              _this.commodityForm.swiperList.map((item,index) =>{
+
+                // console.log(item)
+
+                if(item.name){
+                  data.productSpuImagesEntities.push({
+                    id:item.id,
+                    spuId:_this.commodityForm.id ? _this.commodityForm.id : "",
+                    imgSort:Number(index+1),
+                    imgUrl: item.url
+                  })
+
+                }else{
+                  data.productSpuImagesEntities.push({
+                    id:item.id,
+                    spuId:_this.commodityForm.id ? _this.commodityForm.id : "",
+                    imgSort:Number(index+1),
+                    imgUrl: item
+                  })
+                }
+
+              })
+
+
+              _this.specsList.map(item =>{
+
+                data.productSkuInfoEntities.push({
+                  id:item.id,
+                  price: item.price,
+                  skuDefaultImg: item.imgUrl,
+                  skuName: item.name,
+                  capacity: 100,
+                  spuType:_this.commodityForm.type,
+                  spuId:_this.commodityForm.id, //商品Id
+                  stock: item.number,
+                  // coupon:item.coupon,
+                  // vipAmount: item.vipAmount
+                })
+              })
+
+
+              // console.log("================================")
+              // console.log(data)
+
+
+              // return
+
+
+
+                return addCommodity(data)
+                .then((res) => {
+
+                  if(res.code == 200){
+
+                     this.$notification.success({
+                        message: '操作',
+                        description: '发布成功'
+                    })
+                    this.init();
+
+
+
+                  }else{
+
+                  }
+
+                })
+
+            }else{
+              this.$message.error('图片上传异常')
+            }
+
+          })
+        }else{
+
+
+              var data ={
+                id:Number(_this.commodityForm.id),
+                spuName:_this.commodityForm.name,
+                imgUrl:_this.commodityForm.imgUrl,
+                spuType:_this.commodityForm.type,
+
+                productSpuInfoDescEntities:[{
+                  spuId:_this.commodityForm.id ? _this.commodityForm.id : '',
+                  decript:_this.content
+                }],
+
+                productSpuImagesEntities: [],
+                // isActivity:_this.commodityForm.isActivity ? 1 : 0,
+
+                feight:_this.commodityForm.shippingCost || 0,
+                productSkuInfoEntities:[],
+
+              }
+
+
+
+
+              _this.commodityForm.swiperList = httpImgList;
+
+
+
+              _this.commodityForm.swiperList.map((item,index) =>{
+
+                if(item.name){
+                  data.productSpuImagesEntities.push({
+                    id:item.id,
+                    spuId:_this.commodityForm.id ? _this.commodityForm.id : "",
+                    imgSort:Number(index+1),
+                    imgUrl: item.url
+                  })
+
+                }else{
+                  data.productSpuImagesEntities.push({
+                    id:item.id,
+                    spuId:_this.commodityForm.id ? _this.commodityForm.id : "",
+                    imgSort:Number(index+1),
+                    imgUrl: item
+                  })
+                }
+
+              })
+
+
+
+              _this.specsList.map(item =>{
+
+                data.productSkuInfoEntities.push({
+                  id:item.id,
+                  price: item.price,
+                  skuDefaultImg: item.imgUrl,
+                  skuName: item.name,
+                  capacity: 100,
+                  spuType:_this.commodityForm.type,
+                  spuId:_this.commodityForm.id, //商品id
+                  stock: item.number,
+                  // coupon:item.coupon,
+                  // vipAmount: item.vipAmount
+                })
+              })
+
+
+              // console.log("++++++++++++++++++++++++++")
+
+              // console.log(_this.specsList)
+
+              // console.log(data)
+
+              // return
+
+
+                return addCommodity(data)
+                .then((res) => {
+
+                  if(res.code == 200){
+
+                     this.$notification.success({
+                        message: '操作',
+                        description: '发布成功'
+                    })
+                    this.init();
+
+                  }else{
+
+                  }
+
+                })
+
+
+        }
+
+
+
+
+
+      },
+      // 验证
+      check(){
+
+
+        var isok = false;
+
+        if(this.commodityForm.name ==""){
+            this.$message.warning('商品名称不能为空');
+          isok = true;
+          return isok;
+        }else if(this.commodityForm.imgUrl ==''){
+            this.$message.warning('首图不能为空');
+          isok = true;
+          return isok;
+
+        }else if(!this.commodityForm.isAgent && this.commodityForm.type ==''){
+            this.$message.warning('商品类型不能为空');
+          isok = true;
+          return isok;
+
+        }
+
+
+        for(var i = 0; i<this.specsList.length; i++){
+          if(this.specsList[i].name == ''){
+            this.$message.warning('商品规格名称不能为空');
+            isok = true;
+            break;
+          }else if(this.specsList[i].price == ''){
+            this.$message.warning('商品规格价格不能为空');
+            isok = true;
+            break;
+          }else if(this.specsList[i].number == ''){
+            this.$message.warning('商品规格库存数量不能为空');
+            isok = true;
+            break;
+          }
+
+        }
+
+        return isok;
+
+      },
+
+      //添加商品
+      postFormData() {
+
+        var _this = this;
+
+        if(_this.check()){
+          return
+        }
+
+        _this.addWeiper();
+
+
+      },
+
+      handleChange3(file){
+
+         const formData = new FormData()
+
+          formData.append('files', file.file)
+
+          return uploadFiles(formData)
+          .then((res) => {
+            // console.log(res)
+            if(res.code == 200){
+
+              this.specsList[this.imgIndex].imgUrl =  res.imgesList[0]
+
+              this.$message.success('上传成功')
+              // _this.visible = false;
+            }
+
+          })
+
+
+
+      },
+
+      beforeUpload3(file){
+
+         const reader = new FileReader();
+         // 把Array Buffer转化为blob 如果是base64不需要
+         // 转化为base64
+         reader.readAsDataURL(file)
+         reader.onload = () => {
+          //  console.log(this.imgIndex)
+           this.specsList[this.imgIndex].img =  reader.result
+
+         }
+
+         return false
+
+      },
+
+      handleChange1(file){
+
+
+
+
+         const formData = new FormData()
+
+          formData.append('files', file.file)
+
+          return uploadFiles(formData)
+          .then((res) => {
+
+            if(res.code == 200){
+
+              this.commodityForm.imgUrl = res.imgesList[0];
+
+              this.$message.success('上传成功')
+              // _this.visible = false;
+            }
+
+          })
+
+
+      },
+
+
+
+      beforeUpload1(file) {
+
+
+         const reader = new FileReader();
+         // 把Array Buffer转化为blob 如果是base64不需要
+         // 转化为base64
+         reader.readAsDataURL(file)
+         reader.onload = () => {
+
+            this.commodityForm.cover = reader.result // 点击头像的裁切回显
+
+         }
+
+         return false
+      },
+
+
+
+
+
+
+   },
+
+   // 如果你需要得到当前的editor对象来做一些事情，你可以像下面这样定义一个方法属性来获取当前的editor对象，实际上这里的$refs对应的是当前组件内所有关联了ref属性的组件元素对象
+  computed: {
+    editor() {
+      return this.$refs.myTextEditor.quillEditor
+    }
+  },
+  created() {
+
+
+  },
+
+
+   mounted() {
+
+
+    this.getTypeList();
+    this.commodityForm['id'] = this.$route.query.id;
+
+    if(this.$route.query.id){
+     this.getCommodityInfoById(this.commodityForm.id);
+    }
+
+   },
+}
+</script>
+
+<style lang="less" >
+
+.specs_list_item{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  // height: 100px;
+  // border: 1px red solid;
+  // background: #f7f7f7;
+
+  .specs_list_item_lfte{
+    display: flex;
+    align-items: center;
+
+  }
+
+  .ant-form-item{
+    display: flex;
+    align-items: center;
+    margin: 0;
+    .avatar-uploader > .ant-upload {
+        width: 40px;
+        height: 40px;
+        margin-top: 12px;
+    }
+  }
+  .ant-btn-group{
+
+    button:nth-child(2){
+         margin-left: 12px;
+    }
+  }
+}
+
+
+
+
+.editor {
+    line-height: normal !important;
+    height: 400px;
+}
+  .soneditor{
+    float: right;
+    height: 400px;
+    width: 500px;
+    margin-top: -434px;
+    text-align: justify;
+    background-color: #eee;
+}
+  .save_btn{
+    float: left;
+    margin-top: 80px;
+  }
+.ql-bubble .ql-tooltip[data-mode="link"]::before {
+  content: "请输入链接地址:";
+}
+.ql-snow .ql-tooltip.ql-editing a.ql-action::after {
+  border-right: 0px;
+  content: "保存";
+  padding-right: 0px;
+}
+
+.ql-snow .ql-tooltip[data-mode="video"]::before {
+  content: "请输入视频地址:";
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-label::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item::before {
+  content: "14px";
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="small"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="small"]::before {
+  content: "10px";
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="large"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="large"]::before {
+  content: "18px";
+}
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="huge"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="huge"]::before {
+  content: "32px";
+}
+
+.ql-snow .ql-picker.ql-header .ql-picker-label::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item::before {
+  content: "文本";
+}
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="1"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="1"]::before {
+  content: "标题1";
+}
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="2"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="2"]::before {
+  content: "标题2";
+}
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="3"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="3"]::before {
+  content: "标题3";
+}
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="4"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="4"]::before {
+  content: "标题4";
+}
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="5"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="5"]::before {
+  content: "标题5";
+}
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="6"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="6"]::before {
+  content: "标题6";
+}
+
+.ql-snow .ql-picker.ql-font .ql-picker-label::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item::before {
+  content: "标准字体";
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="serif"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="serif"]::before {
+  content: "衬线字体";
+}
+.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="monospace"]::before,
+.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="monospace"]::before {
+  content: "等宽字体";
+}
+
+
+.steps {
+   max-width: 750px;
+   margin: 16px auto;
+}
+.ant-upload.ant-upload-select-picture-card{
+
+   img{
+      width: 100%;
+   }
+}
+
+.ant-form-item{
+      margin-bottom: 5px;
+}
+
+#shopedit{
+  .right{
+    height: 500px;
+  }
+}
+
+</style>
