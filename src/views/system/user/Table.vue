@@ -965,6 +965,9 @@ export default {
           }:{
             //新增参数
             loginAccount:this.userForm.phone,
+			//注意不要漏加userPhone
+            userPhone:this.userForm.phone,
+			
             loginPassword:this.userForm.loginPassword,
             parentAccount:this.userForm.parentAccount,
             parentSalt:this.userForm.parentSalt,
