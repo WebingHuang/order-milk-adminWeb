@@ -120,7 +120,6 @@
                         </a-select>
                      </a-form-model-item>
                      <a-form-model-item has-feedback label="启用/停用"  >
-
                           <a-switch default-checked :checked="routerForm.status" @click="routerForm.status=!routerForm.status"/>
                      </a-form-model-item>
 

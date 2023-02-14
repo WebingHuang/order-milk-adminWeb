@@ -107,7 +107,7 @@ export default {
   created () {
 
     this.menus = asyncRouterMap.find((item) => item.path === '/').children
-    this.collapsed = !this.sidebarOpened
+    this.collapsed = this.sidebarOpened
 
     //开启权限删除上面释放下面
     // const routes = this.mainMenu.find(item => item.path === '/')
