@@ -106,15 +106,15 @@
             {{ index + 1 }}
           </span>
 
-
-
           <span slot="action" slot-scope="text, record">
+						
             <template>
               <a @click="handleEdit(record)">配置</a>
-
             </template>
+						
           </span>
         </s-table>
+				
       </a-card>
       <!-- 抽屉 -->
       <template>

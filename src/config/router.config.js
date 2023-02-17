@@ -119,13 +119,13 @@ export const asyncRouterMap = [
 
           ]
       },
-      // {
-      //   path: '/card/table',
-      //   name: 'card',
-      //   meta: { title: '臻香卡管理', icon: 'barcode', permission: ['card'] },
-      //   component: () => import('@/views/card/Table'),
+      {
+        path: '/card/table',
+        name: 'card',
+        meta: { title: '积分卡管理', icon: 'barcode', permission: ['card'] },
+        component: () => import('@/views/card/Table'),
 
-      // },
+      },
       {
         path: '/order/table',
         name: 'order',
